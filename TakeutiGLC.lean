@@ -1,0 +1,1 @@
+import TakeutiGLC.Syntax.TypeProfile

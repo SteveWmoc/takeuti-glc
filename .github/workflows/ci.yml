@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject unfinished proofs
+        run: |
+          if grep -RInE --include='*.lean' '(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$)' TakeutiGLC TakeutiGLC.lean; then
+            echo "Lean proof placeholders are not permitted."
+            exit 1
+          fi
+
+      - name: Verify public module coverage
+        run: |
+          missing=0
+          while IFS= read -r file; do
+            module="${file%.lean}"
+            module="${module//\//.}"
+            if ! grep -Fxq "import ${module}" TakeutiGLC.lean; then
+              echo "Missing from TakeutiGLC.lean: ${module}"
+              missing=1
+            fi
+          done < <(find TakeutiGLC -type f -name '*.lean' | sort)
+          exit "${missing}"
+
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: true
