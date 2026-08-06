@@ -11,7 +11,9 @@ This repository is being initialized before active development begins. The stage
 
 ## Milestone 1 — Formal specification of the syntax
 
-- [ ] Transcribe Takeuti's type conventions and formation rules from §§1–3.
+- [x] Prototype Takeuti's type profiles with a shifted internal representation.
+- [x] Record the type-level correspondence in `docs/syntax-spec.md`.
+- [ ] Transcribe Takeuti's remaining formation rules from §§1–3.
 - [ ] Separate historical notation from the internal Lean representation.
 - [ ] Decide between intrinsically scoped de Bruijn syntax, locally nameless syntax, or a named syntax with alpha-equivalence.
 - [ ] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
