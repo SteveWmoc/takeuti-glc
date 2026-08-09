@@ -13,9 +13,11 @@ This repository is being initialized before active development begins. The stage
 
 - [x] Prototype Takeuti's type profiles with a shifted internal representation.
 - [x] Record the type-level correspondence in `docs/syntax-spec.md`.
-- [ ] Transcribe Takeuti's remaining formation rules from §§1–3.
-- [ ] Separate historical notation from the internal Lean representation.
-- [ ] Decide between intrinsically scoped de Bruijn syntax, locally nameless syntax, or a named syntax with alpha-equivalence.
+- [x] Transcribe Takeuti's symbol classes and formation rules from §§1–3.
+- [x] Prototype the source-level variable, function, and logical symbol classes.
+- [ ] Separate historical notation from the final internal Lean representation.
+- [ ] Compare intrinsically scoped de Bruijn syntax with a locally nameless prototype.
+- [ ] Decide the binding representation.
 - [ ] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
 
 **Deliverable:** a reviewed design document and small executable prototypes; not yet the final syntax API.
