@@ -208,7 +208,9 @@ Take pairwise distinct free variables
 α¹ : (n₁), ..., αⁱ : (nᵢ)
 ```
 
-and a formula `A` containing them. Choose pairwise distinct bound variables
+and a formula `A`. The selected free variables need not actually occur in `A`;
+if one is absent, the corresponding replacement below is vacuous. Choose
+pairwise distinct bound variables
 
 ```text
 φ¹ : (n₁), ..., φⁱ : (nᵢ)
@@ -227,8 +229,10 @@ The result is a variety of type
 (n₁ + 1, ..., nᵢ + 1).
 ```
 
-This is the first formation rule whose faithful mechanization depends strongly
-on the eventual representation of binders and freshness.
+Thus §2.6 permits vacuous abstraction positions and, in particular, constant
+higher-type varieties. This is the first formation rule whose faithful
+mechanization depends strongly on the eventual representation of binders and
+freshness.
 
 ### 4.5 Propositional connectives (§2.7)
 
