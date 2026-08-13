@@ -48,13 +48,13 @@ inductive Variety : Nat → Nat → Type where
       (index : Fin varDepth) : Variety varDepth funDepth
   | freeFunApp {varDepth funDepth : Nat}
       (symbol : FunctionSymbol)
-      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+      (args : Arguments varDepth funDepth) : Variety varDepth funDepth
   | specialFunApp {varDepth funDepth : Nat}
       (symbol : FunctionSymbol)
-      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+      (args : Arguments varDepth funDepth) : Variety varDepth funDepth
   | boundFunApp {varDepth funDepth : Nat}
       (index : Fin funDepth)
-      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+      (args : Arguments varDepth funDepth) : Variety varDepth funDepth
   | abstract {varDepth funDepth : Nat}
       (headLevel : Nat)
       (tailLevels : List Nat)
@@ -70,13 +70,13 @@ Takeuti's two syntactically distinct binder families explicit in the type.
 inductive Formula : Nat → Nat → Type where
   | atomFree {varDepth funDepth : Nat}
       (symbol : VariableSymbol)
-      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+      (args : Arguments varDepth funDepth) : Formula varDepth funDepth
   | atomSpecial {varDepth funDepth : Nat}
       (symbol : VariableSymbol)
-      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+      (args : Arguments varDepth funDepth) : Formula varDepth funDepth
   | atomBound {varDepth funDepth : Nat}
       (index : Fin varDepth)
-      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+      (args : Arguments varDepth funDepth) : Formula varDepth funDepth
   | neg {varDepth funDepth : Nat}
       (body : Formula varDepth funDepth) : Formula varDepth funDepth
   | conj {varDepth funDepth : Nat}
@@ -95,6 +95,22 @@ inductive Formula : Nat → Nat → Type where
   | existsFun {varDepth funDepth : Nat}
       (profile : FunctionProfile)
       (body : Formula varDepth (Nat.succ funDepth)) : Formula varDepth funDepth
+
+/--
+A recursive argument spine for applications in the intrinsically indexed
+prototype.
+
+Using `List (Variety varDepth funDepth)` directly inside this mutual indexed
+inductive is rejected by Lean's nested-inductive positivity checker when the
+list element type contains local scope indices. A mutually defined spine keeps
+the same intended structure while exposing the extra engineering cost of the
+intrinsically indexed approach.
+-/
+inductive Arguments : Nat → Nat → Type where
+  | nil {varDepth funDepth : Nat} : Arguments varDepth funDepth
+  | cons {varDepth funDepth : Nat}
+      (head : Variety varDepth funDepth)
+      (tail : Arguments varDepth funDepth) : Arguments varDepth funDepth
 
 end
 
