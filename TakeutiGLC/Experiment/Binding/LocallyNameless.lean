@@ -1,20 +1,15 @@
-import TakeutiGLC.Syntax.Symbol
+import TakeutiGLC.Experiment.Binding.Name
 
 /-!
 # Binding experiment: locally nameless syntax
 
 This file is the locally nameless counterpart to
-`TakeutiGLC.Experiment.DeBruijn`. Free and special source symbols retain opaque
-names, while bound variable and function occurrences are represented by raw
+`TakeutiGLC.Experiment.DeBruijn`. Free and special occurrences retain kind-free
+opaque names, while bound variable and function occurrences use natural-number
 de Bruijn indices.
 
-Unlike the intrinsically scoped prototype, raw syntax is not indexed by context
-depths. This keeps the recursive datatype stable across binders, but dangling
-bound references are representable and must eventually be excluded by a local
-closure / well-scopedness judgment.
-
-As with the de Bruijn prototype, the experiment records binder profiles but does
-not yet enforce all of Takeuti's typing side conditions.
+Raw syntax is not indexed by context depth. This keeps recursive syntax stable
+across binders, while scope correctness is expressed separately.
 -/
 
 namespace TakeutiGLC.Experiment.LocallyNameless
@@ -30,11 +25,11 @@ mutual
 
 /-- Raw locally nameless varieties. -/
 inductive Variety where
-  | freeVar (symbol : VariableSymbol)
-  | specialVar (symbol : VariableSymbol)
+  | freeVar (name : VariableName)
+  | specialVar (name : VariableName)
   | boundVar (index : Nat)
-  | freeFunApp (symbol : FunctionSymbol) (args : List Variety)
-  | specialFunApp (symbol : FunctionSymbol) (args : List Variety)
+  | freeFunApp (name : FunctionName) (args : List Variety)
+  | specialFunApp (name : FunctionName) (args : List Variety)
   | boundFunApp (index : Nat) (args : List Variety)
   | abstract
       (headLevel : Nat)
@@ -43,8 +38,8 @@ inductive Variety where
 
 /-- Raw locally nameless formulas. -/
 inductive Formula where
-  | atomFree (symbol : VariableSymbol) (args : List Variety)
-  | atomSpecial (symbol : VariableSymbol) (args : List Variety)
+  | atomFree (name : VariableName) (args : List Variety)
+  | atomSpecial (name : VariableName) (args : List Variety)
   | atomBound (index : Nat) (args : List Variety)
   | neg (body : Formula)
   | conj (left right : Formula)
@@ -63,11 +58,7 @@ inductive Functional where
       (tailLevels : List Nat)
       (body : Variety)
 
-/--
-The two independent binder depths needed to interpret raw bound indices.
-A complete locally nameless development would define local closure recursively
-for varieties, formulas, and functionals relative to a value of this structure.
--/
+/-- The two independent scope depths used to interpret raw indices. -/
 structure Scope where
   varDepth : Nat
   funDepth : Nat
@@ -89,22 +80,13 @@ def underBlock (scope : Scope) (tailLevels : List Nat) : Scope :=
 
 end Scope
 
-/-- A raw bound-variable index is valid at a given scope when it is in range. -/
+/-- A raw variable index is valid when it is below the variable depth. -/
 def BoundVariableInScope (scope : Scope) (index : Nat) : Prop :=
   index < scope.varDepth
 
-/-- A raw bound-function index is valid at a given scope when it is in range. -/
+/-- A raw function index is valid when it is below the function depth. -/
 def BoundFunctionInScope (scope : Scope) (index : Nat) : Prop :=
   index < scope.funDepth
-
-/--
-A deliberately dangling term. Its existence demonstrates the proof obligation
-that the locally nameless representation moves out of the datatype itself.
--/
-def danglingVariable : Variety := .boundVar 0
-
-/-- The analogous dangling bound-function application. -/
-def danglingFunction : Variety := .boundFunApp 0 []
 
 @[simp] theorem boundVariable_not_in_empty_scope (index : Nat) :
     ¬ BoundVariableInScope ⟨0, 0⟩ index := by
