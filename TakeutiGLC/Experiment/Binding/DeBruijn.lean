@@ -32,21 +32,34 @@ mutual
 /--
 A scope-indexed prototype of Takeuti varieties.
 
-`varDepth` and `funDepth` count the variable and function binders in scope.
+The two natural numbers are *indices* of the inductive family, rather than
+uniform parameters. This is essential: a binder constructor must be able to
+store a body at a larger scope depth than the expression it constructs.
+
 Free and special source symbols keep the opaque names from `Symbol.lean`;
 bound source names disappear and are represented by de Bruijn indices.
 -/
-inductive Variety (varDepth funDepth : Nat) where
-  | freeVar (symbol : VariableSymbol)
-  | specialVar (symbol : VariableSymbol)
-  | boundVar (index : Fin varDepth)
-  | freeFunApp (symbol : FunctionSymbol) (args : List (Variety varDepth funDepth))
-  | specialFunApp (symbol : FunctionSymbol) (args : List (Variety varDepth funDepth))
-  | boundFunApp (index : Fin funDepth) (args : List (Variety varDepth funDepth))
-  | abstract
+inductive Variety : Nat → Nat → Type where
+  | freeVar {varDepth funDepth : Nat}
+      (symbol : VariableSymbol) : Variety varDepth funDepth
+  | specialVar {varDepth funDepth : Nat}
+      (symbol : VariableSymbol) : Variety varDepth funDepth
+  | boundVar {varDepth funDepth : Nat}
+      (index : Fin varDepth) : Variety varDepth funDepth
+  | freeFunApp {varDepth funDepth : Nat}
+      (symbol : FunctionSymbol)
+      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+  | specialFunApp {varDepth funDepth : Nat}
+      (symbol : FunctionSymbol)
+      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+  | boundFunApp {varDepth funDepth : Nat}
+      (index : Fin funDepth)
+      (args : List (Variety varDepth funDepth)) : Variety varDepth funDepth
+  | abstract {varDepth funDepth : Nat}
       (headLevel : Nat)
       (tailLevels : List Nat)
-      (body : Formula (blockSize tailLevels + varDepth) funDepth)
+      (body : Formula (blockSize tailLevels + varDepth) funDepth) :
+      Variety varDepth funDepth
 
 /--
 A scope-indexed prototype of Takeuti formulas.
@@ -54,17 +67,34 @@ A scope-indexed prototype of Takeuti formulas.
 Variable and function quantifiers extend different context depths. This makes
 Takeuti's two syntactically distinct binder families explicit in the type.
 -/
-inductive Formula (varDepth funDepth : Nat) where
-  | atomFree (symbol : VariableSymbol) (args : List (Variety varDepth funDepth))
-  | atomSpecial (symbol : VariableSymbol) (args : List (Variety varDepth funDepth))
-  | atomBound (index : Fin varDepth) (args : List (Variety varDepth funDepth))
-  | neg (body : Formula varDepth funDepth)
-  | conj (left right : Formula varDepth funDepth)
-  | disj (left right : Formula varDepth funDepth)
-  | allVar (profile : TypeProfile) (body : Formula (Nat.succ varDepth) funDepth)
-  | existsVar (profile : TypeProfile) (body : Formula (Nat.succ varDepth) funDepth)
-  | allFun (profile : FunctionProfile) (body : Formula varDepth (Nat.succ funDepth))
-  | existsFun (profile : FunctionProfile) (body : Formula varDepth (Nat.succ funDepth))
+inductive Formula : Nat → Nat → Type where
+  | atomFree {varDepth funDepth : Nat}
+      (symbol : VariableSymbol)
+      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+  | atomSpecial {varDepth funDepth : Nat}
+      (symbol : VariableSymbol)
+      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+  | atomBound {varDepth funDepth : Nat}
+      (index : Fin varDepth)
+      (args : List (Variety varDepth funDepth)) : Formula varDepth funDepth
+  | neg {varDepth funDepth : Nat}
+      (body : Formula varDepth funDepth) : Formula varDepth funDepth
+  | conj {varDepth funDepth : Nat}
+      (left right : Formula varDepth funDepth) : Formula varDepth funDepth
+  | disj {varDepth funDepth : Nat}
+      (left right : Formula varDepth funDepth) : Formula varDepth funDepth
+  | allVar {varDepth funDepth : Nat}
+      (profile : TypeProfile)
+      (body : Formula (Nat.succ varDepth) funDepth) : Formula varDepth funDepth
+  | existsVar {varDepth funDepth : Nat}
+      (profile : TypeProfile)
+      (body : Formula (Nat.succ varDepth) funDepth) : Formula varDepth funDepth
+  | allFun {varDepth funDepth : Nat}
+      (profile : FunctionProfile)
+      (body : Formula varDepth (Nat.succ funDepth)) : Formula varDepth funDepth
+  | existsFun {varDepth funDepth : Nat}
+      (profile : FunctionProfile)
+      (body : Formula varDepth (Nat.succ funDepth)) : Formula varDepth funDepth
 
 end
 
@@ -72,11 +102,12 @@ end
 A prototype functional. As in §3.2, a nonempty block of variable binders scopes
 over a variety intended eventually to be checked as a term.
 -/
-inductive Functional (varDepth funDepth : Nat) where
-  | abstract
+inductive Functional : Nat → Nat → Type where
+  | abstract {varDepth funDepth : Nat}
       (headLevel : Nat)
       (tailLevels : List Nat)
-      (body : Variety (blockSize tailLevels + varDepth) funDepth)
+      (body : Variety (blockSize tailLevels + varDepth) funDepth) :
+      Functional varDepth funDepth
 
 @[simp] theorem blockSize_pos (tailLevels : List Nat) : 0 < blockSize tailLevels := by
   simp [blockSize]
