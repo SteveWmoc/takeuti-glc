@@ -27,8 +27,17 @@ the datatype that every application has exactly the argument types required by
 ## 1. Common structural choices
 
 Both prototypes remove source-level names for bound variables and bound
-functions. Free and special symbols retain the opaque names introduced in
-`TakeutiGLC/Syntax/Symbol.lean`.
+functions. The historical symbol layer in `TakeutiGLC/Syntax/Symbol.lean`
+retains Takeuti's free/bound/special classification, but the experimental core
+does not store that classification inside named occurrences. Instead,
+`TakeutiGLC/Experiment/Names.lean` keeps only a profile and opaque name index.
+The occurrence constructor itself determines whether such a name is free or
+special; bound occurrences are represented only by de Bruijn indices.
+
+This separation prevents contradictory core objects such as a constructor
+labelled `freeVar` carrying a historical symbol tagged `bound`, and keeps the
+binding comparison focused on the actual scope representation rather than on a
+separate well-formedness condition for symbol kinds.
 
 There are two independent binder classes:
 
@@ -79,8 +88,8 @@ and a bound function occurrence contains
 Fin funDepth.
 ```
 
-Consequently, dangling bound references are unrepresentable. For example, a
-closed object at variable depth `0` cannot contain a bound-variable occurrence
+Consequently, an out-of-scope bound reference is unrepresentable. For example,
+a closed object at variable depth `0` cannot contain a bound-variable occurrence
 because `Fin 0` is empty.
 
 ### Quantifiers
@@ -128,9 +137,14 @@ For an `i`-variable abstraction block, existing outer variable indices must be
 embedded past `i` newly bound positions. The prototype therefore predicts that
 renaming, closing, and substitution will carry nontrivial dependent bookkeeping.
 
-That is not necessarily a defect: the bookkeeping may buy simpler theorems
-later by ruling out malformed syntax from the start. M1.3 has not tested that
-tradeoff yet.
+The experiment has already exposed one additional implementation cost: Lean's
+positivity checker does not accept `List (Variety v f)` directly as a recursive
+field of this mutually indexed family, so the prototype uses a mutually defined
+`Arguments v f` spine instead.
+
+That bookkeeping is not necessarily a defect: it may buy simpler theorems later
+by ruling out malformed syntax from the start. M1.3 has not yet tested that
+tradeoff against opening and closing.
 
 ## 3. Locally nameless prototype
 
@@ -140,8 +154,9 @@ File:
 TakeutiGLC/Experiment/Binding/LocallyNameless.lean
 ```
 
-The raw recursive syntax has no context indices. Free and special symbols keep
-names, while bound occurrences use raw natural-number de Bruijn indices:
+The raw recursive syntax has no context indices. Free and special occurrences
+use the same kind-free source names as the de Bruijn prototype, while bound
+occurrences use raw natural-number de Bruijn indices:
 
 ```lean
 boundVar    : Nat -> Variety
@@ -165,16 +180,10 @@ namespaces.
 
 ### Immediate cost
 
-Raw syntax admits dangling indices. The prototype deliberately contains
-examples such as
-
-```lean
-danglingVariable : Variety := .boundVar 0
-```
-
-which cannot denote a closed variety. A real locally nameless development must
-therefore define and preserve a local-closure / well-scopedness judgment with
-separate variable and function depths.
+Raw natural-number indices are not intrinsically checked against a context
+depth. A real locally nameless development must therefore define and preserve a
+local-closure / well-scopedness judgment with separate variable and function
+depths.
 
 Thus scope correctness moves from the datatype into propositions and proof
 obligations.
@@ -202,9 +211,12 @@ The first prototype slice gives several firm conclusions.
 2. Takeuti's nonempty higher-type abstraction is naturally represented as a
    binder block rather than as an artificial nest of unary binders.
 3. Vacuous abstraction requires no special case in either representation.
-4. Eliminating bound source names from the core should make alpha-equivalence
+4. Historical symbol roles should be erased before entering the core; the
+   occurrence constructor should determine free versus special, while bound
+   occurrences should be indices only.
+5. Eliminating bound source names from the core should make alpha-equivalence
    substantially simpler than a literal transcription.
-5. The central tradeoff is now explicit:
+6. The central tradeoff is now explicit:
    - intrinsically scoped de Bruijn syntax pays for scope correctness in the
      types of transformations;
    - locally nameless syntax keeps transformations on a stable raw datatype but
