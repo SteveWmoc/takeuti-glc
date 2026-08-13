@@ -1,4 +1,4 @@
-import TakeutiGLC.Experiment.Binding.Name
+import TakeutiGLC.Experiment.Names
 
 /-!
 # Binding experiment: intrinsically scoped de Bruijn syntax
