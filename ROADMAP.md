@@ -15,8 +15,10 @@ This repository is being initialized before active development begins. The stage
 - [x] Record the type-level correspondence in `docs/syntax-spec.md`.
 - [x] Transcribe Takeuti's symbol classes and formation rules from §§1–3.
 - [x] Prototype the source-level variable, function, and logical symbol classes.
+- [x] Build first intrinsically scoped de Bruijn and locally nameless binding prototypes.
+- [x] Record the initial scoping tradeoffs in `docs/binding-experiment.md`.
+- [ ] Compare closing/opening operations for variable, function, and abstraction binders.
 - [ ] Separate historical notation from the final internal Lean representation.
-- [ ] Compare intrinsically scoped de Bruijn syntax with a locally nameless prototype.
 - [ ] Decide the binding representation.
 - [ ] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
 
