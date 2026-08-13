@@ -1,4 +1,4 @@
-import TakeutiGLC.Syntax.Symbol
+import TakeutiGLC.Experiment.Binding.Name
 
 /-!
 # Binding experiment: intrinsically scoped de Bruijn syntax
@@ -36,21 +36,21 @@ The two natural numbers are *indices* of the inductive family, rather than
 uniform parameters. This is essential: a binder constructor must be able to
 store a body at a larger scope depth than the expression it constructs.
 
-Free and special source symbols keep the opaque names from `Symbol.lean`;
-bound source names disappear and are represented by de Bruijn indices.
+Free and special occurrences use kind-free source names. Bound source names do
+not occur in the core and are represented exclusively by de Bruijn indices.
 -/
 inductive Variety : Nat → Nat → Type where
   | freeVar {varDepth funDepth : Nat}
-      (symbol : VariableSymbol) : Variety varDepth funDepth
+      (name : VariableName) : Variety varDepth funDepth
   | specialVar {varDepth funDepth : Nat}
-      (symbol : VariableSymbol) : Variety varDepth funDepth
+      (name : VariableName) : Variety varDepth funDepth
   | boundVar {varDepth funDepth : Nat}
       (index : Fin varDepth) : Variety varDepth funDepth
   | freeFunApp {varDepth funDepth : Nat}
-      (symbol : FunctionSymbol)
+      (name : FunctionName)
       (args : Arguments varDepth funDepth) : Variety varDepth funDepth
   | specialFunApp {varDepth funDepth : Nat}
-      (symbol : FunctionSymbol)
+      (name : FunctionName)
       (args : Arguments varDepth funDepth) : Variety varDepth funDepth
   | boundFunApp {varDepth funDepth : Nat}
       (index : Fin funDepth)
@@ -69,10 +69,10 @@ Takeuti's two syntactically distinct binder families explicit in the type.
 -/
 inductive Formula : Nat → Nat → Type where
   | atomFree {varDepth funDepth : Nat}
-      (symbol : VariableSymbol)
+      (name : VariableName)
       (args : Arguments varDepth funDepth) : Formula varDepth funDepth
   | atomSpecial {varDepth funDepth : Nat}
-      (symbol : VariableSymbol)
+      (name : VariableName)
       (args : Arguments varDepth funDepth) : Formula varDepth funDepth
   | atomBound {varDepth funDepth : Nat}
       (index : Fin varDepth)
