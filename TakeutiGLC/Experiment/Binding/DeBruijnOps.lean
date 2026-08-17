@@ -12,7 +12,7 @@ the engineering cost of intrinsic scoping can be compared rather than hidden.
 namespace TakeutiGLC.Experiment.DeBruijn
 
 /-- Insert one new slot into a finite de Bruijn context. -/
-def insertFin (cutoff : Nat) {depth : Nat} (hcut : cutoff ≤ depth)
+def insertFin (cutoff : Nat) {depth : Nat} (_hcut : cutoff ≤ depth)
     (index : Fin depth) : Fin (Nat.succ depth) :=
   if h : index.val < cutoff then
     ⟨index.val, by omega⟩
@@ -39,7 +39,6 @@ def removeFin (cutoff : Nat) {depth : Nat} (hcut : cutoff ≤ depth)
 
 mutual
 
-/-- Close one free variable at a cutoff in an intrinsically scoped variety. -/
 def closeVarietyVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Variety varDepth funDepth → Variety (Nat.succ varDepth) funDepth
@@ -58,7 +57,6 @@ def closeVarietyVarAt {varDepth funDepth : Nat} (target : VariableName)
         simpa [Nat.add_assoc] using
           closeFormulaVarAt target (blockSize tailLevels + cutoff) (by omega) body)
 
-/-- Close one free variable at a cutoff in an intrinsically scoped formula. -/
 def closeFormulaVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Formula varDepth funDepth → Formula (Nat.succ varDepth) funDepth
@@ -89,7 +87,6 @@ def closeFormulaVarAt {varDepth funDepth : Nat} (target : VariableName)
   | .existsFun profile body =>
       .existsFun profile (closeFormulaVarAt target cutoff hcut body)
 
-/-- Close one free variable throughout an indexed argument spine. -/
 def closeArgumentsVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Arguments varDepth funDepth → Arguments (Nat.succ varDepth) funDepth
@@ -102,7 +99,6 @@ end
 
 mutual
 
-/-- Open one variable slot in an intrinsically scoped variety. -/
 def openVarietyVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Variety (Nat.succ varDepth) funDepth → Variety varDepth funDepth
@@ -124,7 +120,6 @@ def openVarietyVarAt {varDepth funDepth : Nat} (target : VariableName)
           simpa [Nat.add_assoc] using body
         exact openFormulaVarAt target (blockSize tailLevels + cutoff) (by omega) body')
 
-/-- Open one variable slot in an intrinsically scoped formula. -/
 def openFormulaVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Formula (Nat.succ varDepth) funDepth → Formula varDepth funDepth
@@ -153,7 +148,6 @@ def openFormulaVarAt {varDepth funDepth : Nat} (target : VariableName)
   | .existsFun profile body =>
       .existsFun profile (openFormulaVarAt target cutoff hcut body)
 
-/-- Open one variable slot throughout an indexed argument spine. -/
 def openArgumentsVarAt {varDepth funDepth : Nat} (target : VariableName)
     (cutoff : Nat) (hcut : cutoff ≤ varDepth) :
     Arguments (Nat.succ varDepth) funDepth → Arguments varDepth funDepth
@@ -166,7 +160,6 @@ end
 
 mutual
 
-/-- Close one free function at a cutoff in an intrinsically scoped variety. -/
 def closeVarietyFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Variety varDepth funDepth → Variety varDepth (Nat.succ funDepth)
@@ -185,7 +178,6 @@ def closeVarietyFunAt {varDepth funDepth : Nat} (target : FunctionName)
   | .abstract headLevel tailLevels body =>
       .abstract headLevel tailLevels (closeFormulaFunAt target cutoff hcut body)
 
-/-- Close one free function at a cutoff in an intrinsically scoped formula. -/
 def closeFormulaFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Formula varDepth funDepth → Formula varDepth (Nat.succ funDepth)
@@ -211,7 +203,6 @@ def closeFormulaFunAt {varDepth funDepth : Nat} (target : FunctionName)
   | .existsFun profile body =>
       .existsFun profile (closeFormulaFunAt target (cutoff + 1) (by omega) body)
 
-/-- Close one free function throughout an indexed argument spine. -/
 def closeArgumentsFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Arguments varDepth funDepth → Arguments varDepth (Nat.succ funDepth)
@@ -224,7 +215,6 @@ end
 
 mutual
 
-/-- Open one function slot in an intrinsically scoped variety. -/
 def openVarietyFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Variety varDepth (Nat.succ funDepth) → Variety varDepth funDepth
@@ -243,7 +233,6 @@ def openVarietyFunAt {varDepth funDepth : Nat} (target : FunctionName)
   | .abstract headLevel tailLevels body =>
       .abstract headLevel tailLevels (openFormulaFunAt target cutoff hcut body)
 
-/-- Open one function slot in an intrinsically scoped formula. -/
 def openFormulaFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Formula varDepth (Nat.succ funDepth) → Formula varDepth funDepth
@@ -269,7 +258,6 @@ def openFormulaFunAt {varDepth funDepth : Nat} (target : FunctionName)
   | .existsFun profile body =>
       .existsFun profile (openFormulaFunAt target (cutoff + 1) (by omega) body)
 
-/-- Open one function slot throughout an indexed argument spine. -/
 def openArgumentsFunAt {varDepth funDepth : Nat} (target : FunctionName)
     (cutoff : Nat) (hcut : cutoff ≤ funDepth) :
     Arguments varDepth (Nat.succ funDepth) → Arguments varDepth funDepth
@@ -280,76 +268,64 @@ def openArgumentsFunAt {varDepth funDepth : Nat} (target : FunctionName)
 
 end
 
-/-- Close one free variable under a newly introduced outer variable binder. -/
 def closeVarietyVar {varDepth funDepth : Nat} (target : VariableName) :
     Variety varDepth funDepth → Variety (Nat.succ varDepth) funDepth :=
   closeVarietyVarAt target 0 (Nat.zero_le varDepth)
 
-/-- Close one free variable in a formula under a new outer variable binder. -/
 def closeFormulaVar {varDepth funDepth : Nat} (target : VariableName) :
     Formula varDepth funDepth → Formula (Nat.succ varDepth) funDepth :=
   closeFormulaVarAt target 0 (Nat.zero_le varDepth)
 
-/-- Open the newest outer variable binder. -/
 def openVarietyVar {varDepth funDepth : Nat} (target : VariableName) :
     Variety (Nat.succ varDepth) funDepth → Variety varDepth funDepth :=
   openVarietyVarAt target 0 (Nat.zero_le varDepth)
 
-/-- Open the newest outer variable binder in a formula. -/
 def openFormulaVar {varDepth funDepth : Nat} (target : VariableName) :
     Formula (Nat.succ varDepth) funDepth → Formula varDepth funDepth :=
   openFormulaVarAt target 0 (Nat.zero_le varDepth)
 
-/-- Close one free function under a newly introduced outer function binder. -/
 def closeVarietyFun {varDepth funDepth : Nat} (target : FunctionName) :
     Variety varDepth funDepth → Variety varDepth (Nat.succ funDepth) :=
   closeVarietyFunAt target 0 (Nat.zero_le funDepth)
 
-/-- Close one free function in a formula under a new outer function binder. -/
 def closeFormulaFun {varDepth funDepth : Nat} (target : FunctionName) :
     Formula varDepth funDepth → Formula varDepth (Nat.succ funDepth) :=
   closeFormulaFunAt target 0 (Nat.zero_le funDepth)
 
-/-- Open the newest outer function binder. -/
 def openVarietyFun {varDepth funDepth : Nat} (target : FunctionName) :
     Variety varDepth (Nat.succ funDepth) → Variety varDepth funDepth :=
   openVarietyFunAt target 0 (Nat.zero_le funDepth)
 
-/-- Open the newest outer function binder in a formula. -/
 def openFormulaFun {varDepth funDepth : Nat} (target : FunctionName) :
     Formula varDepth (Nat.succ funDepth) → Formula varDepth funDepth :=
   openFormulaFunAt target 0 (Nat.zero_le funDepth)
 
-/--
-Close a list of free variable names one at a time. The result depth records the
-number of inserted block slots.
--/
+/-- Close a list of free variable names one at a time. -/
 def closeFormulaVarBlock {varDepth funDepth : Nat} :
     (names : List VariableName) → Formula varDepth funDepth →
       Formula (varDepth + names.length) funDepth
-  | [], body => by simpa using body
-  | name :: names, body => by
-      simpa [Nat.add_succ] using
-        closeFormulaVar name (closeFormulaVarBlock names body)
+  | [], body => body
+  | name :: names, body =>
+      closeFormulaVar name (closeFormulaVarBlock names body)
 
 /-- Open a block previously closed by `closeFormulaVarBlock`. -/
 def openFormulaVarBlock {varDepth funDepth : Nat} :
     (names : List VariableName) → Formula (varDepth + names.length) funDepth →
       Formula varDepth funDepth
-  | [], body => by simpa using body
-  | name :: names, body => by
-      have body' : Formula (Nat.succ (varDepth + names.length)) funDepth := by
-        simpa [Nat.add_succ] using body
-      exact openFormulaVarBlock names (openFormulaVar name body')
+  | [], body => body
+  | name :: names, body =>
+      openFormulaVarBlock names (openFormulaVar name body)
 
-/-- The finite-index insertion/removal layer is an exact round trip. -/
 @[simp] theorem removeFin_insertFin {depth : Nat} (cutoff : Nat)
     (hcut : cutoff ≤ depth) (index : Fin depth) :
     removeFin cutoff hcut (insertFin cutoff hcut index) = some index := by
-  simp [insertFin, removeFin]
-  split <;> omega
+  by_cases h : index.val < cutoff
+  · simp [insertFin, removeFin, h]
+  · have hge : cutoff ≤ index.val := Nat.le_of_not_gt h
+    have hnotlt : ¬ index.val + 1 < cutoff := by omega
+    have hne : index.val + 1 ≠ cutoff := by omega
+    simp [insertFin, removeFin, h, hnotlt, hne]
 
-/-- Direct free-variable occurrences close and open without residue. -/
 @[simp] theorem open_close_freeVar {varDepth funDepth : Nat}
     (target : VariableName) :
     openVarietyVar target
@@ -358,7 +334,6 @@ def openFormulaVarBlock {varDepth funDepth : Nat} :
   simp [openVarietyVar, closeVarietyVar, openVarietyVarAt, closeVarietyVarAt,
     newFin, removeFin]
 
-/-- Existing bound-variable occurrences are shifted and then restored. -/
 @[simp] theorem open_close_boundVar {varDepth funDepth : Nat}
     (target : VariableName) (index : Fin varDepth) :
     openVarietyVar target
@@ -367,7 +342,6 @@ def openFormulaVarBlock {varDepth funDepth : Nat} :
   simp [openVarietyVar, closeVarietyVar, openVarietyVarAt, closeVarietyVarAt,
     insertFin, removeFin]
 
-/-- Direct free-function applications close and open without residue. -/
 @[simp] theorem open_close_freeFunApp_nil {varDepth funDepth : Nat}
     (target : FunctionName) :
     openVarietyFun target
