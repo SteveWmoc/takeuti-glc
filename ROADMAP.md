@@ -17,7 +17,7 @@ This repository is being initialized before active development begins. The stage
 - [x] Prototype the source-level variable, function, and logical symbol classes.
 - [x] Build first intrinsically scoped de Bruijn and locally nameless binding prototypes.
 - [x] Record the initial scoping tradeoffs in `docs/binding-experiment.md`.
-- [ ] Compare closing/opening operations for variable, function, and abstraction binders.
+- [x] Compare closing/opening operations for variable, function, and abstraction binders.
 - [ ] Separate historical notation from the final internal Lean representation.
 - [ ] Decide the binding representation.
 - [ ] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
