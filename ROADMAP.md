@@ -18,11 +18,11 @@ This repository is being initialized before active development begins. The stage
 - [x] Build first intrinsically scoped de Bruijn and locally nameless binding prototypes.
 - [x] Record the initial scoping tradeoffs in `docs/binding-experiment.md`.
 - [x] Compare closing/opening operations for variable, function, and abstraction binders.
-- [ ] Separate historical notation from the final internal Lean representation.
-- [ ] Decide the binding representation.
-- [ ] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
+- [x] Separate historical notation from the final internal Lean representation.
+- [x] Decide the binding representation.
+- [x] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
 
-**Deliverable:** a reviewed design document and small executable prototypes; not yet the final syntax API.
+**Deliverable:** a reviewed design document and small executable prototypes; not yet the final syntax API. The binding decision and source-to-core correspondence are recorded in `docs/syntax-design.md`.
 
 ## Milestone 2 — Renaming and substitution kernel
 
