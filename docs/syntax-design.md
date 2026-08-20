@@ -349,15 +349,25 @@ The resulting core node is `allFun profile body` or
 A functional
 
 ```text
-{φ¹, ..., φⁱ} T
+{φ¹, ..., φⁱ} T(α¹, ..., αⁱ)
 ```
 
-uses the same variable-block translation convention as §2.6. Its body
-translates as a `Variety`, and the typing judgment additionally requires that
-body to be a term, i.e. a variety of type `(0)`.
+uses the same **block-index convention** as §2.6, but not the same occurrence
+replacement rule. Section 3.1 allows the notation `T(α¹, ..., αⁱ)` to indicate
+only selected occurrences of each free variable, and §3.2 abstracts exactly
+those indicated occurrences. The source-to-core translation must therefore
+receive the auxiliary occurrence selection together with the source term.
 
-The functional receives type `(n₁+1, ..., nᵢ+1)` from the stored predecessor
-levels.
+While translating the body, the block environment assigns `φ¹` index `0`,
+`φ²` index `1`, and so on. An indicated occurrence of `αᵏ` is translated to the
+corresponding bound-variable index. An **unindicated** occurrence of that same
+free source variable remains a free occurrence in the resulting core body.
+Thus partial indication is preserved; full indication is only the special case
+where every occurrence of each selected free variable is converted.
+
+The body translates as a `Variety`, and the typing judgment additionally
+requires that body to be a term, i.e. a variety of type `(0)`. The functional
+receives type `(n₁+1, ..., nᵢ+1)` from the stored predecessor levels.
 
 ## 10. Indicated occurrences
 
@@ -365,14 +375,19 @@ Takeuti's notation `A(α)` in §3.1 marks selected occurrences; it is
 meta-notation rather than another formula constructor. The stable raw syntax
 will therefore **not** contain an `indicated` constructor.
 
-Milestone 2 should represent indication as auxiliary data over an existing raw
-expression—for example occurrence positions, a selection predicate, or an
-operation parameter—when the exact needs of §5 substitution are formalized.
-The representation should permit both partial indication and the full
-indication of §3.3.
+Indication is nevertheless required already for the faithful source-to-core
+translation of §3.2 functionals, not only later for §5 substitution. Milestone
+2 should therefore introduce auxiliary occurrence-selection data over an
+existing source or raw expression—for example occurrence positions, stable
+occurrence identifiers, a selection predicate, or an operation parameter.
+The representation must permit partial indication, including the possibility
+that only some occurrences of a named free variable are selected, as well as
+the full indication of §3.3.
 
-This design deliberately fixes the boundary (indication is auxiliary, not raw
-syntax) without prematurely choosing the final occurrence-selection datatype.
+The same auxiliary mechanism can then be reused by §5 substitution. This design
+fixes the architectural boundary—indication is an input to translations and
+operations, not a raw syntax constructor—without prematurely choosing the final
+occurrence-selection datatype.
 
 ## 11. Homology and alpha-equivalence
 
@@ -427,7 +442,8 @@ Milestone 1 has now fixed the following design points.
    index.
 7. Typing is initially an extrinsic context-indexed judgment.
 8. Terms are type-`(0)` varieties, not a separate raw syntax category.
-9. Indicated occurrences are auxiliary metasyntactic data, not raw syntax.
+9. Indicated occurrences are auxiliary metasyntactic data used by translation
+   and later substitution operations, not raw syntax.
 10. Bound renaming should disappear under source-to-core translation, making
     ordinary core equality the intended target for Takeuti's homology.
 
