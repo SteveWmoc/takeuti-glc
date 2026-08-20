@@ -3,10 +3,13 @@
 ## Status
 
 This document records the source-level syntax conventions in §§1–3 of Gaisi
-Takeuti's 1953 paper *On a generalized logic calculus*. The Lean code currently
-contains executable prototypes for type profiles and source-level symbol
-classes. It does **not** yet choose a binding representation or define the final
-inductive types for varieties, formulas, or functionals.
+Takeuti's 1953 paper *On a generalized logic calculus*. The Lean code contains
+executable prototypes for type profiles, source-level symbol classes, and the
+binding experiments used during Milestone 1.
+
+This file remains the source-level specification. The binding representation
+and historical-to-core correspondence selected after those experiments are
+recorded separately in [`syntax-design.md`](syntax-design.md).
 
 The primary source is included in this repository as
 [`Takeuti53.pdf`](../Takeuti53.pdf).
@@ -143,8 +146,9 @@ constructors `neg`, `conj`, `disj`, `all`, and `exists`.
 ## 4. Varieties and formulas (§2)
 
 Takeuti calls any row of symbols a **figure** and recursively defines varieties
-and formulas among figures. This section records the formation rules without
-yet choosing Lean binders.
+and formulas among figures. This section records the formation rules at the
+source level; the internal binding representation is specified in
+`docs/syntax-design.md`.
 
 ### 4.1 Base varieties (§§2.1–2.2)
 
@@ -339,8 +343,10 @@ notation is of **full indication** exactly when every occurrence of `α` in `A`
 is among the indicated occurrences.
 
 Indication and full indication become important in §5, where Takeuti develops
-his substitution machinery. We therefore postpone their Lean representation
-until the binding and substitution experiments.
+his substitution machinery. Their stable representation is deliberately left
+to Milestone 2; `docs/syntax-design.md` fixes only the architectural decision
+that indication is auxiliary metasyntactic data rather than a raw syntax
+constructor.
 
 ## 6. Formation-rule summary
 
@@ -359,22 +365,26 @@ The source-level constructors can be summarized as follows.
 | §2.9 | formula + function replacement | formula via `∀` or `E` |
 | §3.2 | term + abstraction of free variables | functional |
 
-This table is intended to drive the binding prototypes in the next Milestone 1
-step.
+This table is the source-level reference for the stable syntax construction in
+Milestone 2.
 
-## 7. Decisions deliberately postponed
+## 7. Milestone 1 design resolution
 
-This specification does not decide:
+The binding questions that were deliberately postponed in the first version of
+this specification are resolved in `docs/syntax-design.md`.
 
-- whether the final syntax will be intrinsically scoped;
-- whether binders will use de Bruijn indices, a locally nameless method, or
-  named syntax with alpha-equivalence;
-- whether free/special source symbols should share the same identifier type;
-- whether formulas, varieties, and functionals should be mutually inductive;
-- how indicated occurrences should be represented;
-- how Takeuti's later notion of *homologous* expressions will be related to the
-  internal equality of Lean objects.
+In summary:
 
-The next step is to implement a very small common fragment with competing
-binding representations and compare how naturally they express §§2.6, 2.8,
-2.9, and 3.2.
+- the stable core will use locally nameless syntax;
+- bound variables and bound functions use separate de Bruijn namespaces;
+- free and special names remain named, while historical bound names disappear
+  at the core boundary;
+- higher-type abstractions are represented as genuine nonempty binder blocks;
+- scope correctness is expressed by a structural well-scopedness judgment;
+- typing is initially an extrinsic context-indexed judgment;
+- indicated occurrences remain auxiliary metasyntactic data;
+- the intended treatment of Takeuti's homology is that admissible renaming of
+  bound source names disappears under source-to-core translation.
+
+The executable evidence for the choice is retained in
+`docs/binding-experiment.md` and `docs/opening-closing-experiment.md`.
