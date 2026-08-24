@@ -1,5 +1,8 @@
 import TakeutiGLC.Syntax.TypeProfile
 import TakeutiGLC.Syntax.Symbol
+import TakeutiGLC.Syntax.Name
+import TakeutiGLC.Syntax.Core
+import TakeutiGLC.Syntax.Scope
 import TakeutiGLC.Experiment.Names
 import TakeutiGLC.Experiment.Binding.DeBruijn
 import TakeutiGLC.Experiment.Binding.DeBruijnOps
