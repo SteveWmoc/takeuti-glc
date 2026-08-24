@@ -4,8 +4,8 @@ import TakeutiGLC.Syntax.Core
 # Structural scope for the stable GLC syntax
 
 The locally nameless core deliberately permits raw natural-number bound
-indices. This file isolates the corresponding scope invariant in a lightweight,
-computable layer with separate depths for Takeuti's variable and function
+indices. This file isolates the corresponding scope invariant in lightweight
+inductive judgments with separate depths for Takeuti's variable and function
 binder namespaces.
 -/
 
@@ -54,87 +54,109 @@ end Scope
 
 mutual
 
-/-- Decide whether every bound occurrence in a variety is in scope. -/
-def Variety.isWellScoped (scope : Scope) : Variety → Bool
-  | .freeVar _ => true
-  | .specialVar _ => true
-  | .boundVar index => decide (index < scope.varDepth)
-  | .freeFunApp _ args => args.all (Variety.isWellScoped scope)
-  | .specialFunApp _ args => args.all (Variety.isWellScoped scope)
-  | .boundFunApp index args =>
-      decide (index < scope.funDepth) && args.all (Variety.isWellScoped scope)
-  | .abstract _ tailLevels body =>
-      Formula.isWellScoped (scope.underBlock tailLevels) body
+/-- Structural well-scopedness for varieties. -/
+inductive Variety.WellScoped : Scope → Variety → Prop where
+  | freeVar (scope : Scope) (name : VariableName) :
+      Variety.WellScoped scope (.freeVar name)
+  | specialVar (scope : Scope) (name : VariableName) :
+      Variety.WellScoped scope (.specialVar name)
+  | boundVar (scope : Scope) (index : Nat) (hindex : index < scope.varDepth) :
+      Variety.WellScoped scope (.boundVar index)
+  | freeFunApp (scope : Scope) (name : FunctionName) (args : List Variety)
+      (hargs : VarietiesWellScoped scope args) :
+      Variety.WellScoped scope (.freeFunApp name args)
+  | specialFunApp (scope : Scope) (name : FunctionName) (args : List Variety)
+      (hargs : VarietiesWellScoped scope args) :
+      Variety.WellScoped scope (.specialFunApp name args)
+  | boundFunApp (scope : Scope) (index : Nat) (args : List Variety)
+      (hindex : index < scope.funDepth) (hargs : VarietiesWellScoped scope args) :
+      Variety.WellScoped scope (.boundFunApp index args)
+  | abstract (scope : Scope) (headLevel : Nat) (tailLevels : List Nat) (body : Formula)
+      (hbody : Formula.WellScoped (scope.underBlock tailLevels) body) :
+      Variety.WellScoped scope (.abstract headLevel tailLevels body)
 
-/-- Decide whether every bound occurrence in a formula is in scope. -/
-def Formula.isWellScoped (scope : Scope) : Formula → Bool
-  | .atomFree _ args => args.all (Variety.isWellScoped scope)
-  | .atomSpecial _ args => args.all (Variety.isWellScoped scope)
-  | .atomBound index args =>
-      decide (index < scope.varDepth) && args.all (Variety.isWellScoped scope)
-  | .neg body => Formula.isWellScoped scope body
-  | .conj left right =>
-      Formula.isWellScoped scope left && Formula.isWellScoped scope right
-  | .disj left right =>
-      Formula.isWellScoped scope left && Formula.isWellScoped scope right
-  | .allVar _ body => Formula.isWellScoped scope.underVar body
-  | .existsVar _ body => Formula.isWellScoped scope.underVar body
-  | .allFun _ body => Formula.isWellScoped scope.underFun body
-  | .existsFun _ body => Formula.isWellScoped scope.underFun body
+/-- Structural well-scopedness for formulas. -/
+inductive Formula.WellScoped : Scope → Formula → Prop where
+  | atomFree (scope : Scope) (name : VariableName) (args : List Variety)
+      (hargs : VarietiesWellScoped scope args) :
+      Formula.WellScoped scope (.atomFree name args)
+  | atomSpecial (scope : Scope) (name : VariableName) (args : List Variety)
+      (hargs : VarietiesWellScoped scope args) :
+      Formula.WellScoped scope (.atomSpecial name args)
+  | atomBound (scope : Scope) (index : Nat) (args : List Variety)
+      (hindex : index < scope.varDepth) (hargs : VarietiesWellScoped scope args) :
+      Formula.WellScoped scope (.atomBound index args)
+  | neg (scope : Scope) (body : Formula)
+      (hbody : Formula.WellScoped scope body) :
+      Formula.WellScoped scope (.neg body)
+  | conj (scope : Scope) (left right : Formula)
+      (hleft : Formula.WellScoped scope left)
+      (hright : Formula.WellScoped scope right) :
+      Formula.WellScoped scope (.conj left right)
+  | disj (scope : Scope) (left right : Formula)
+      (hleft : Formula.WellScoped scope left)
+      (hright : Formula.WellScoped scope right) :
+      Formula.WellScoped scope (.disj left right)
+  | allVar (scope : Scope) (profile : TypeProfile) (body : Formula)
+      (hbody : Formula.WellScoped scope.underVar body) :
+      Formula.WellScoped scope (.allVar profile body)
+  | existsVar (scope : Scope) (profile : TypeProfile) (body : Formula)
+      (hbody : Formula.WellScoped scope.underVar body) :
+      Formula.WellScoped scope (.existsVar profile body)
+  | allFun (scope : Scope) (profile : FunctionProfile) (body : Formula)
+      (hbody : Formula.WellScoped scope.underFun body) :
+      Formula.WellScoped scope (.allFun profile body)
+  | existsFun (scope : Scope) (profile : FunctionProfile) (body : Formula)
+      (hbody : Formula.WellScoped scope.underFun body) :
+      Formula.WellScoped scope (.existsFun profile body)
+
+/-- Structural well-scopedness for lists of variety arguments. -/
+inductive VarietiesWellScoped : Scope → List Variety → Prop where
+  | nil (scope : Scope) : VarietiesWellScoped scope []
+  | cons (scope : Scope) (head : Variety) (tail : List Variety)
+      (hhead : Variety.WellScoped scope head)
+      (htail : VarietiesWellScoped scope tail) :
+      VarietiesWellScoped scope (head :: tail)
 
 end
 
-/-- Decide whether every bound occurrence in a functional is in scope. -/
-def Functional.isWellScoped (scope : Scope) : Functional → Bool
-  | .abstract _ tailLevels body =>
-      Variety.isWellScoped (scope.underBlock tailLevels) body
-
-/-- Propositional form of structural well-scopedness for varieties. -/
-def Variety.WellScoped (scope : Scope) (variety : Variety) : Prop :=
-  variety.isWellScoped scope = true
-
-/-- Propositional form of structural well-scopedness for formulas. -/
-def Formula.WellScoped (scope : Scope) (formula : Formula) : Prop :=
-  formula.isWellScoped scope = true
-
-/-- Propositional form of structural well-scopedness for functionals. -/
-def Functional.WellScoped (scope : Scope) (functional : Functional) : Prop :=
-  functional.isWellScoped scope = true
+/-- Structural well-scopedness for functionals. -/
+inductive Functional.WellScoped : Scope → Functional → Prop where
+  | abstract (scope : Scope) (headLevel : Nat) (tailLevels : List Nat) (body : Variety)
+      (hbody : Variety.WellScoped (scope.underBlock tailLevels) body) :
+      Functional.WellScoped scope (.abstract headLevel tailLevels body)
 
 /-- A variety is closed when it is well scoped in the empty context. -/
 def Variety.Closed (variety : Variety) : Prop :=
-  variety.WellScoped Scope.empty
+  Variety.WellScoped Scope.empty variety
 
 /-- A formula is closed when it is well scoped in the empty context. -/
 def Formula.Closed (formula : Formula) : Prop :=
-  formula.WellScoped Scope.empty
+  Formula.WellScoped Scope.empty formula
 
 /-- A functional is closed when it is well scoped in the empty context. -/
 def Functional.Closed (functional : Functional) : Prop :=
-  functional.WellScoped Scope.empty
+  Functional.WellScoped Scope.empty functional
 
 @[simp] theorem Variety.wellScoped_freeVar (scope : Scope) (name : VariableName) :
-    (Variety.freeVar name).WellScoped scope := by
-  rfl
+    Variety.WellScoped scope (.freeVar name) :=
+  .freeVar scope name
 
 @[simp] theorem Variety.wellScoped_specialVar (scope : Scope) (name : VariableName) :
-    (Variety.specialVar name).WellScoped scope := by
-  rfl
+    Variety.WellScoped scope (.specialVar name) :=
+  .specialVar scope name
 
-@[simp] theorem Variety.wellScoped_boundVar_iff (scope : Scope) (index : Nat) :
-    (Variety.boundVar index).WellScoped scope ↔ index < scope.varDepth := by
-  simp [Variety.WellScoped, Variety.isWellScoped]
+theorem Variety.wellScoped_boundVar (scope : Scope) (index : Nat)
+    (hindex : index < scope.varDepth) :
+    Variety.WellScoped scope (.boundVar index) :=
+  .boundVar scope index hindex
 
-@[simp] theorem Formula.wellScoped_atomBound_nil_iff (scope : Scope) (index : Nat) :
-    (Formula.atomBound index []).WellScoped scope ↔ index < scope.varDepth := by
-  simp [Formula.WellScoped, Formula.isWellScoped]
+@[simp] theorem Variety.closed_freeVar (name : VariableName) :
+    Variety.Closed (.freeVar name) :=
+  .freeVar Scope.empty name
 
-@[simp] theorem Variety.not_closed_boundVar (index : Nat) :
-    ¬ (Variety.boundVar index).Closed := by
-  simp [Variety.Closed]
-
-@[simp] theorem Formula.not_closed_atomBound_nil (index : Nat) :
-    ¬ (Formula.atomBound index []).Closed := by
-  simp [Formula.Closed]
+@[simp] theorem Variety.closed_specialVar (name : VariableName) :
+    Variety.Closed (.specialVar name) :=
+  .specialVar Scope.empty name
 
 end TakeutiGLC
