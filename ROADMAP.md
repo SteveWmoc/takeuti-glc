@@ -26,6 +26,10 @@ This repository is being initialized before active development begins. The stage
 
 ## Milestone 2 — Renaming and substitution kernel
 
+- [x] Promote the chosen locally nameless representation to stable core syntax.
+- [x] Define structural well-scopedness with independent variable/function depths.
+- [ ] Define the extrinsic typing/well-formedness judgment for §§2–3.
+- [ ] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
 - [ ] Define renaming and weakening for every syntactic category.
 - [ ] Define capture-avoiding substitution of varieties for variables.
 - [ ] Define substitution of functionals for function symbols.
