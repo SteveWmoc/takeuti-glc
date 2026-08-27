@@ -1,6 +1,6 @@
 # Roadmap
 
-This repository is being initialized before active development begins. The stages below are intended to prevent premature commitment to a difficult binding representation.
+Active development is organized in milestones so that foundational representation choices are made deliberately and later metatheory can be built on a stable kernel. Completed milestones are retained here as an audit trail rather than rewritten after the fact.
 
 ## Milestone 0 — Project scaffold
 
@@ -22,7 +22,7 @@ This repository is being initialized before active development begins. The stage
 - [x] Decide the binding representation.
 - [x] State an explicit correspondence between Lean objects and Takeuti's varieties, formulas, and functionals.
 
-**Deliverable:** a reviewed design document and small executable prototypes; not yet the final syntax API. The binding decision and source-to-core correspondence are recorded in `docs/syntax-design.md`.
+**Deliverable:** reviewed design documentation and executable prototypes. The binding decision and source-to-core correspondence are recorded in `docs/syntax-design.md`.
 
 ## Milestone 2 — Renaming and substitution kernel
 
@@ -30,12 +30,13 @@ This repository is being initialized before active development begins. The stage
 - [x] Define structural well-scopedness with independent variable/function depths.
 - [ ] Define the extrinsic typing/well-formedness judgment for §§2–3.
 - [ ] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
+- [ ] Promote opening/closing operations to the stable syntax namespace.
 - [ ] Define renaming and weakening for every syntactic category.
 - [ ] Define capture-avoiding substitution of varieties for variables.
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.
 
-**Deliverable:** a stable syntax library with no quotient-level ambiguity in ordinary use.
+**Deliverable:** a stable syntax library with explicit scope and typing invariants and no quotient-level ambiguity in ordinary use.
 
 ## Milestone 3 — Generalized logic calculus
 
@@ -72,4 +73,16 @@ Takeuti states cut elimination for GLC (or even `G^1LC`) as a conjecture rather 
 - [ ] Formalize or reuse its cut-elimination argument.
 - [ ] Prove the necessary equivalence or interpretation theorem for Takeuti's GLC.
 
-This milestone is intentionally outside the initial scope.
+This milestone is intentionally outside the initial formalization of Takeuti's 1953 results.
+
+## Project-wide QA
+
+These checks apply across milestones rather than constituting a separate mathematical milestone:
+
+- [x] CI build on every pull request and push to `main`.
+- [x] Reject `sorry` and `admit` in project Lean source.
+- [x] Verify that every public Lean module is imported by `TakeutiGLC.lean`.
+- [x] Run a project `lake lint` driver in CI.
+- [x] Treat Lean warnings as CI failures.
+- [x] Check trailing whitespace and tabs in Lean source.
+- [ ] Add theorem-level regression tests as the stable metatheory grows.
