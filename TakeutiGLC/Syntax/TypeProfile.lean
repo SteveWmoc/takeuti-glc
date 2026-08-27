@@ -3,9 +3,9 @@ import Mathlib.Data.List.Basic
 /-!
 # Takeuti type profiles
 
-This file records the type notation used in §§1–3 of Takeuti's 1953 paper.
-It is an executable prototype for Milestone 1, not yet a commitment to the
-final representation of scoped syntax.
+This file implements the shifted type-profile representation selected during
+Milestone 1. It records the type notation used in §§1–3 of Takeuti's 1953
+paper and is part of the stable syntax layer.
 -/
 
 namespace TakeutiGLC
@@ -114,15 +114,15 @@ def height : TypeProfile → Nat
   | zero => rfl
   | succ n => simp [height]
 
- theorem displayedEntries_ne_nil (profile : TypeProfile) :
+theorem displayedEntries_ne_nil (profile : TypeProfile) :
     displayedEntries profile ≠ [] := by
   cases profile <;> simp
 
- theorem arity_higher_pos (head : Nat) (tail : List Nat) :
+theorem arity_higher_pos (head : Nat) (tail : List Nat) :
     0 < arity (.higher head tail) := by
   simp
 
- theorem height_higher_pos (head : Nat) (tail : List Nat) :
+theorem height_higher_pos (head : Nat) (tail : List Nat) :
     0 < height (.higher head tail) := by
   simp
 

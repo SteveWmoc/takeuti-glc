@@ -2,97 +2,59 @@
 
 ## Status
 
-This document closes Milestone 1 by recording the binding representation chosen
-for the stable GLC syntax and the intended correspondence with Takeuti's
-source-level notation.
+This document records the binding and syntax architecture selected at the end of Milestone 1. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-The decision is based on the source specification in `docs/syntax-spec.md` and
-the two executable experiments in `docs/binding-experiment.md` and
-`docs/opening-closing-experiment.md`. It is a design record, not yet the final
-syntax API. Milestone 2 will turn this design into the stable syntax,
-well-scopedness, renaming, and substitution library.
+The design is no longer merely prospective: M2.1 has implemented the stable name, raw-syntax, and structural-scope layers in
 
-## 1. Decision
+```text
+TakeutiGLC/Syntax/Name.lean
+TakeutiGLC/Syntax/Core.lean
+TakeutiGLC/Syntax/Scope.lean
+```
 
-The stable core will use **locally nameless syntax with two independent de
-Bruijn namespaces**.
+The next implementation target is the extrinsic typing/well-formedness judgment for §§2–3. Renaming, occurrence selection, stable opening/closing, and §5 substitution remain downstream.
 
-- Free and special variables keep opaque source names.
-- Free and special functions keep opaque source names.
+This decision was based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
+
+## 1. Binding decision
+
+The stable core uses **locally nameless syntax with two independent de Bruijn namespaces**.
+
+- Free and special variables keep opaque names.
+- Free and special functions keep opaque names.
 - Bound variable occurrences are natural-number de Bruijn indices.
-- Bound function occurrences are natural-number de Bruijn indices in a
-  separate namespace.
+- Bound function occurrences are natural-number de Bruijn indices in a separate namespace.
 - Variable binders affect only the variable namespace.
 - Function binders affect only the function namespace.
-- Takeuti's abstractions in §§2.6 and 3.2 bind a nonempty block of variables in
-  one step.
+- Takeuti's abstractions in §§2.6 and 3.2 bind a nonempty block of variables in one step.
 
-The stable core will therefore follow the shape of the current locally nameless
-prototype rather than the intrinsically scoped `Fin`-indexed prototype.
-
-This choice is specifically a choice about **binding and scope
-representation**. It does not commit the project to making every typing
-condition intrinsic in the datatype.
+This is a choice about binding and scope representation. It does **not** make the whole syntax intrinsically typed.
 
 ## 2. Why locally nameless
 
-The intrinsically scoped experiment establishes a genuine advantage: an
-out-of-scope bound occurrence is unrepresentable. However, the opening/closing
-experiment shows that this invariant is paid for in almost every syntax
-transformation:
+The intrinsically scoped experiment had a genuine advantage: an out-of-scope bound occurrence was unrepresentable. The M1.3b opening/closing experiment showed the price of that invariant, however:
 
-- source and target types change when a binder is crossed;
-- cutoff proofs accompany ordinary recursive clauses;
-- bound indices require `Fin` insertion and removal;
-- abstraction blocks create arithmetic casts between definitionally different
-  scope expressions;
-- the indexed mutual syntax requires a custom recursive argument spine rather
-  than ordinary `List` arguments.
+- source and target datatype indices changed whenever a binder was crossed;
+- ordinary recursive clauses carried cutoff proofs;
+- bound indices required explicit `Fin` insertion and removal;
+- abstraction blocks created arithmetic casts between definitionally different scope expressions;
+- Lean's positivity checker forced a custom recursive argument spine instead of ordinary `List` arguments.
 
-Takeuti's later development is dominated by transformations of syntax,
-especially §5 substitution, §7 restriction, and §8 type elevation. Carrying
-those dependent scope changes throughout the metatheory would make the binding
-representation an active proof burden in precisely the parts of the paper where
-we want the formalization to follow the mathematical recursion closely.
+Takeuti's later development is dominated by syntax transformations—especially §5 substitution, §7 restriction, and §8 type elevation. The project therefore prefers a stable raw datatype plus explicit scope invariants over stronger raw datatypes plus pervasive dependent bookkeeping.
 
-The locally nameless prototype leaves raw dangling indices representable, but
-its opening and closing operations are ordinary recursive functions on a stable
-datatype. Scope correctness can instead be isolated in a reusable
-well-scopedness layer and proved preserved by the transformations that matter.
+The stable core now realizes that choice: raw indices may be dangling, while `Syntax/Scope.lean` supplies the structural invariant separately.
 
-The design therefore prefers a simpler transformation language plus explicit
-scope invariants over stronger raw datatypes plus pervasive dependent
-bookkeeping.
+## 3. Historical layer versus core layer
 
-## 3. Why not literal named syntax
-
-A literal transcription with source names for bound variables and functions
-would preserve the printed notation most directly, but it would make bound
-renaming semantically visible in the raw syntax. Takeuti's later notion of
-homologous expressions would then require either a pervasive alpha-equivalence
-relation, quotients, or repeated renaming lemmas.
-
-Both Milestone 1 binding prototypes avoid that problem by eliminating bound
-source names from the core. The stable design retains that feature.
-
-Historical bound names remain relevant only while translating or presenting
-Takeuti's source notation; they are not part of the internal identity of a bound
-occurrence.
-
-## 4. Historical layer versus core layer
-
-`TakeutiGLC/Syntax/Symbol.lean` records Takeuti's source-level classification:
+`TakeutiGLC/Syntax/Symbol.lean` records Takeuti's historical classification:
 
 - free, bound, and special variables;
 - free, bound, and special functions;
 - source profiles and opaque numerical names.
 
-That historical layer is useful for faithfully describing the paper, but the
-stable core must not store a redundant source `kind` tag inside an occurrence.
-Milestone 1.3a showed that doing so permits contradictory raw objects such as a
-constructor labelled `freeVar` carrying a source symbol tagged `bound`.
+Those source objects are useful for stating the paper faithfully, but the internal syntax does not retain a redundant `kind` field on named occurrences. M1.3a showed why: a constructor labelled `freeVar` could otherwise carry a historical symbol tagged `bound`.
 
-The core therefore uses kind-free names of the following conceptual shape:
+The stable core therefore uses kind-free names:
 
 ```lean
 structure VariableName where
@@ -104,35 +66,31 @@ structure FunctionName where
   index : Nat
 ```
 
-The occurrence constructor carries the remaining role information:
+The occurrence constructor supplies the role:
 
 ```text
-freeVar / atomFree       free variable occurrence
-specialVar / atomSpecial special variable occurrence
-boundVar / atomBound     bound variable index
+freeVar / atomFree        free variable occurrence
+specialVar / atomSpecial  special variable occurrence
+boundVar / atomBound      bound variable index
 
-freeFunApp               free function occurrence
-specialFunApp            special function occurrence
-boundFunApp               bound function index
+freeFunApp                free function occurrence
+specialFunApp             special function occurrence
+boundFunApp                bound function index
 ```
 
-The experimental `TakeutiGLC/Experiment/Names.lean` is the prototype for this
-separation. Milestone 2 should move the stable version into the syntax layer
-rather than importing the experiment as permanent infrastructure.
+Historical bound names are used only while translating or presenting source notation; they are not part of the identity of a bound core occurrence.
 
-## 5. Raw core categories
+## 4. Stable raw categories
 
-The permanent raw syntax should retain three main syntactic categories:
+The permanent raw syntax has three main categories:
 
 - `Variety`;
 - `Formula`;
 - `Functional`.
 
-A **term** is not a fourth raw category. Following §2.10, it is a variety whose
-type is `(0)` according to the well-formedness/type judgment.
+A **term** is not a fourth raw category. Following §2.10, it will be a variety assigned type `(0)` by the typing judgment.
 
-The core should use ordinary recursive argument lists. The intended raw shape
-is essentially:
+The implemented raw shape is intentionally simple and uses ordinary recursive argument lists:
 
 ```lean
 mutual
@@ -168,84 +126,66 @@ inductive Functional where
       (body : Variety)
 ```
 
-This is a design sketch, not an API promise. Milestone 2 may adjust constructor
-names or package the nonempty block profile more directly, provided the
-source-to-core correspondence below is preserved.
+Constructor names may evolve as the metatheory grows, but the source-to-core distinctions represented here are architectural commitments.
 
-## 6. Type profiles and typing
+## 5. Type profiles and typing
 
-The shifted `TypeProfile` representation chosen earlier in Milestone 1 remains
-in force:
+The shifted type-profile representation remains:
 
 ```text
 zero                    ↔ (0)
 higher n [n₂, ..., nᵢ] ↔ (n+1, n₂+1, ..., nᵢ+1)
 ```
 
-The stored predecessor levels are exactly the levels required for the argument
-places in §§2.3–2.6 and §3.2.
+The stored predecessor levels are exactly the levels required for argument places in §§2.3–2.6 and §3.2.
 
-Binding will be locally nameless, but the entire syntax will **not** initially
-be made intrinsically typed. Instead, Milestone 2 should define an extrinsic
-well-formedness/type judgment carrying the profiles of currently bound
-variables and functions.
-
-Conceptually, the contexts have the form
+Typing is intentionally **extrinsic** at the current boundary. The planned contexts have the conceptual form
 
 ```text
 variable context : List TypeProfile
 function context : List FunctionProfile
 ```
 
-and a bound index is typed by looking it up in the appropriate context.
-Free/special names carry their own profiles. The judgment then checks the exact
-formation conditions from §§2–3: argument arities and types, abstraction
-profiles, termhood of functional bodies, and the two quantifier families.
+and a bound de Bruijn index is typed by lookup in the appropriate context. Free and special names carry their own profiles.
 
-Keeping typing extrinsic at this stage has two advantages. It preserves the
-simple recursive raw syntax selected by the binding experiments, and it lets us
-formalize Takeuti's own formation conditions explicitly rather than hiding them
-inside dependent constructor types before §5 substitution has been tested.
+The typing/well-formedness judgment must enforce the source formation rules:
 
-## 7. Local closure / well-scopedness
+- argument arity and profile compatibility;
+- result type `(0)` for function applications;
+- abstraction result profiles;
+- the term condition on functional bodies;
+- variable-quantifier profile lookup in the variable namespace;
+- function-quantifier profile lookup in the function namespace.
 
-Raw locally nameless syntax can contain dangling bound indices. The stable
-library must therefore define a structural scope judgment before substantial
-metatheory begins.
+Making this judgment explicit keeps the raw recursion simple and exposes Takeuti's own formation conditions instead of burying them inside dependent constructor types.
 
-At minimum it should track two depths:
+## 6. Structural well-scopedness
+
+M2.1 implemented structural well-scopedness as inductive propositions rather than datatype indices.
+
+At minimum the invariant tracks two depths:
 
 ```text
-WellScoped variety/formula/functional varDepth funDepth
+varDepth
+funDepth
 ```
 
-with the following clauses.
+with these rules:
 
-- A bound variable index `k` is valid exactly when `k < varDepth`.
-- A bound function index `k` is valid exactly when `k < funDepth`.
-- A variable quantifier checks its body at `varDepth + 1` and unchanged
-  `funDepth`.
-- A function quantifier checks its body at unchanged `varDepth` and
-  `funDepth + 1`.
-- An abstraction with `i` variable slots checks its body at
-  `varDepth + i` and unchanged `funDepth`.
-- Free and special names do not affect either depth.
+- a bound variable index `k` requires `k < varDepth`;
+- a bound function index `k` requires `k < funDepth`;
+- a variable quantifier increases only `varDepth`;
+- a function quantifier increases only `funDepth`;
+- an abstraction with `i` slots increases only `varDepth` by `i`;
+- free and special names affect neither depth.
 
-A closed core expression is well scoped at depths `(0, 0)`.
+A closed core expression is well scoped at the empty two-depth scope.
 
-The eventual typed well-formedness judgment may subsume much of this
-information through profile contexts, but retaining a lightweight scope
-predicate is useful for stating generic opening/closing and substitution lemmas
-without carrying typing hypotheses unnecessarily.
+The later typed judgment may imply structural scope, but retaining a lightweight scope proposition is useful for generic opening, closing, renaming, and substitution lemmas.
 
-## 8. De Bruijn convention
+## 7. De Bruijn convention
 
-The permanent convention follows the M1.3b experiment.
-
-A newly introduced single binder occupies index `0` in its namespace. Existing
-indices at or beyond the insertion cutoff are shifted by one. Crossing a binder
-of the same namespace increments the cutoff; crossing a binder of the other
-namespace leaves it unchanged.
+A newly introduced unary binder occupies index `0` in its namespace. Existing indices at or beyond the insertion cutoff are shifted by one. Crossing a binder of the same namespace increments the cutoff; crossing a binder of the other namespace leaves it unchanged.
 
 For a simultaneous Takeuti abstraction block
 
@@ -253,55 +193,33 @@ For a simultaneous Takeuti abstraction block
 {φ¹, ..., φⁱ}
 ```
 
-the first displayed binder corresponds to index `0`, the second to index `1`,
-and so on within that block. The block remains a single source-level binding
-construction; using repeated single-name closing internally is an
-implementation technique, not a claim that Takeuti's syntax contains nested
-unary abstractions.
+the first displayed binder corresponds to block index `0`, the second to `1`, and so on. The block remains a single source-level binding construction. Repeated unary closing may be used internally as an implementation technique without claiming that Takeuti's syntax contains nested unary abstractions.
 
 Vacuous abstraction slots are permitted, as required by §2.6.
 
-## 9. Source-to-core correspondence
+## 8. Source-to-core correspondence
 
-This section states the intended translation at the design level. A later
-source AST, if introduced, should realize this correspondence explicitly.
+### 8.1 Variables of type `(0)` — §§2.1–2.2
 
-### 9.1 Variables of type `(0)` — §§2.1–2.2
+A free source variable of type `(0)` becomes `Variety.freeVar` after erasing its historical `free` tag into a kind-free `VariableName`.
 
-A free source variable of type `(0)` translates to `Variety.freeVar` after its
-historical `free` tag is erased into a kind-free `VariableName`.
+A special source variable of type `(0)` becomes `Variety.specialVar`.
 
-A special source variable of type `(0)` translates to `Variety.specialVar` in
-the same way.
+A bound source variable name is never stored as a named core occurrence; inside its binder it becomes the de Bruijn index determined by the current variable environment.
 
-A source bound variable name is never translated as a named core occurrence;
-inside the scope of its binder it translates to the de Bruijn index determined
-by the current variable environment.
+### 8.2 Atomic formulas — §§2.3–2.4
 
-### 9.2 Atomic formulas — §§2.3–2.4
+Free and special higher-type variable applications become `Formula.atomFree` and `Formula.atomSpecial` respectively. If the head denotes a variable bound by an enclosing source binder, it becomes `Formula.atomBound`.
 
-A free higher-type variable applied to matching varieties translates to
-`Formula.atomFree name args`.
+The future typing judgment checks that argument varieties have the types prescribed by the head profile.
 
-A special higher-type variable applied to matching varieties translates to
-`Formula.atomSpecial name args`.
+### 8.3 Function application — §2.5
 
-If the source occurrence denotes a variable bound by an enclosing Takeuti
-binder, the head translates instead to `Formula.atomBound index args`.
+Applications of free and special functions become `freeFunApp` and `specialFunApp`. A function occurrence bound by an enclosing function quantifier becomes `boundFunApp`.
 
-The well-formedness judgment, not the raw constructor, verifies that the
-argument varieties have the types prescribed by the head profile.
+The typing judgment will require matching argument profiles and result type `(0)`.
 
-### 9.3 Function application — §2.5
-
-Applications of free and special functions translate to `freeFunApp` and
-`specialFunApp` respectively. A source function occurrence bound by an enclosing
-function quantifier translates to `boundFunApp`.
-
-A well-formed application has result type `(0)` and argument varieties matching
-the predecessor levels stored in the function profile.
-
-### 9.4 Higher-type abstraction — §2.6
+### 8.4 Higher-type abstraction — §2.6
 
 For
 
@@ -309,42 +227,25 @@ For
 {φ¹, ..., φⁱ} A
 ```
 
-the source bound names `φ¹, ..., φⁱ` are used only while translating `A`.
-The variable environment is extended by an `i`-slot block with `φ¹` at index
-`0`, `φ²` at index `1`, and so on. The core node stores the predecessor levels
-`n₁, ..., nᵢ` and the translated body, but not the printed bound names.
+the printed bound names are used only while translating `A`. The variable environment is extended by an `i`-slot block with `φ¹` at index `0`, `φ²` at index `1`, and so on.
 
-The resulting variety receives type
+Section 2.6 replaces **every occurrence** of the selected free variables. A slot may nevertheless be vacuous if its selected free variable does not occur in `A`.
 
-```text
-(n₁+1, ..., nᵢ+1)
-```
+The core node stores predecessor levels and the translated body, not the source binder names. Its type is `(n₁+1, ..., nᵢ+1)` according to the future typing judgment.
 
-through the typing judgment. A binder may be unused in the body.
-
-### 9.5 Propositional connectives — §2.7
+### 8.5 Propositional connectives — §2.7
 
 `¬`, `∧`, and `∨` translate structurally to `neg`, `conj`, and `disj`.
 
-### 9.6 Variable quantification — §2.8
+### 8.6 Variable quantification — §2.8
 
-For `∀φ A` or `Eφ A`, the binder profile is stored on the core quantifier. The
-source name `φ` extends only the variable environment at index `0` while `A` is
-translated. The function environment is unchanged.
+For `∀φ A` or `Eφ A`, the binder profile is stored on the quantifier node. The source name extends only the variable environment at index `0`; the function environment is unchanged.
 
-The resulting core node is `allVar profile body` or
-`existsVar profile body`.
+### 8.7 Function quantification — §2.9
 
-### 9.7 Function quantification — §2.9
+For `∀p A` or `Ep A`, the binder profile is stored on the quantifier node. The source name extends only the function environment at index `0`; the variable environment is unchanged.
 
-For `∀p A` or `Ep A`, the binder profile is stored on the core quantifier. The
-source name `p` extends only the function environment at index `0`; the variable
-environment is unchanged.
-
-The resulting core node is `allFun profile body` or
-`existsFun profile body`.
-
-### 9.8 Functionals — §3.2
+### 8.8 Functionals — §3.2
 
 A functional
 
@@ -352,100 +253,70 @@ A functional
 {φ¹, ..., φⁱ} T(α¹, ..., αⁱ)
 ```
 
-uses the same **block-index convention** as §2.6, but not the same occurrence
-replacement rule. Section 3.1 allows the notation `T(α¹, ..., αⁱ)` to indicate
-only selected occurrences of each free variable, and §3.2 abstracts exactly
-those indicated occurrences. The source-to-core translation must therefore
-receive the auxiliary occurrence selection together with the source term.
+uses the same **block-index convention** as §2.6 but a different occurrence-selection rule.
 
-While translating the body, the block environment assigns `φ¹` index `0`,
-`φ²` index `1`, and so on. An indicated occurrence of `αᵏ` is translated to the
-corresponding bound-variable index. An **unindicated** occurrence of that same
-free source variable remains a free occurrence in the resulting core body.
-Thus partial indication is preserved; full indication is only the special case
-where every occurrence of each selected free variable is converted.
+Section 3.1 permits only some occurrences of a free variable to be indicated. Section 3.2 abstracts exactly those indicated occurrences. Therefore the source-to-core translation must receive auxiliary occurrence-selection data:
 
-The body translates as a `Variety`, and the typing judgment additionally
-requires that body to be a term, i.e. a variety of type `(0)`. The functional
-receives type `(n₁+1, ..., nᵢ+1)` from the stored predecessor levels.
+- indicated occurrences of `αᵏ` become the corresponding block index;
+- unindicated occurrences of the same free variable remain free.
 
-## 10. Indicated occurrences
+Full indication is the special case in which every occurrence is selected.
 
-Takeuti's notation `A(α)` in §3.1 marks selected occurrences; it is
-meta-notation rather than another formula constructor. The stable raw syntax
-will therefore **not** contain an `indicated` constructor.
+The body translates as a `Variety`; the typing judgment additionally requires it to be a term, i.e. to have type `(0)`.
 
-Indication is nevertheless required already for the faithful source-to-core
-translation of §3.2 functionals, not only later for §5 substitution. Milestone
-2 should therefore introduce auxiliary occurrence-selection data over an
-existing source or raw expression—for example occurrence positions, stable
-occurrence identifiers, a selection predicate, or an operation parameter.
-The representation must permit partial indication, including the possibility
-that only some occurrences of a named free variable are selected, as well as
-the full indication of §3.3.
+## 9. Indicated occurrences
 
-The same auxiliary mechanism can then be reused by §5 substitution. This design
-fixes the architectural boundary—indication is an input to translations and
-operations, not a raw syntax constructor—without prematurely choosing the final
-occurrence-selection datatype.
+Indication is metasyntactic data, not a raw syntax constructor. The stable core therefore has no `indicated` node.
 
-## 11. Homology and alpha-equivalence
+Milestone 2 must introduce an auxiliary occurrence-selection representation before a faithful executable source translation of §3.2 and before §5 substitution. Candidate encodings include occurrence paths, stable occurrence identifiers, a selection predicate, or an operation parameter. The exact representation is still open.
 
-The core representation has no bound source names. Consequently, two
-well-formed source expressions that differ only by admissible renaming of bound
-variables or bound functions should translate to the same core object.
+The architectural constraint is fixed: indication is an input to translations and operations, not part of ordinary raw syntax identity.
 
-This is the intended formal relationship between Takeuti's bound-name
-insensitivity and the internal representation. When the historical source
-translation is made executable, the key theorem should have the shape
+## 10. Homology and alpha-equivalence
+
+The core stores no bound source names. Consequently, well-formed source expressions that differ only by admissible renaming of bound variables or bound functions should translate to the same core object.
+
+When the historical source translation becomes executable, the intended theorem has the shape
 
 ```text
-homologous source expressions  ->  equal core translations.
+homologous source expressions  ->  equal core translations
 ```
 
-The project should not introduce a quotient by alpha-equivalence into ordinary
-core syntax unless later source details force it. Milestone 1 gives no evidence
-that such a quotient is necessary.
+The project should not introduce a quotient by alpha-equivalence into ordinary core syntax unless later source details force it.
 
-## 12. Stable-module plan for Milestone 2
+## 11. Current Milestone 2 module plan
 
-The experiments remain useful evidence, but permanent metatheory should not
-live under `TakeutiGLC/Experiment`.
-
-A natural first Milestone 2 layout is:
+Implemented:
 
 ```text
 TakeutiGLC/Syntax/Name.lean
 TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
+```
+
+Expected next modules, with exact names still adjustable:
+
+```text
+TakeutiGLC/Syntax/Typing.lean
+TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The exact file split may change. The important architectural boundary is that
-source notation and experiments remain separate from the stable core and its
-metatheory.
+Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
-## 13. Milestone 1 conclusion
+## 12. Design commitments
 
-Milestone 1 has now fixed the following design points.
+The project currently treats the following as fixed unless later proof work supplies a concrete reason to revisit them:
 
-1. Takeuti profiles use the shifted predecessor-level representation already
-   implemented in `TypeProfile` and `FunctionProfile`.
-2. Historical free/bound/special symbol classes are retained for source
-   description but erased appropriately at the core boundary.
-3. The core binding representation is locally nameless.
-4. Variable and function binders use independent de Bruijn namespaces.
-5. Higher-type abstractions are genuine nonempty variable-binding blocks.
-6. Scope validity is an explicit structural invariant rather than a datatype
-   index.
-7. Typing is initially an extrinsic context-indexed judgment.
-8. Terms are type-`(0)` varieties, not a separate raw syntax category.
-9. Indicated occurrences are auxiliary metasyntactic data used by translation
-   and later substitution operations, not raw syntax.
-10. Bound renaming should disappear under source-to-core translation, making
-    ordinary core equality the intended target for Takeuti's homology.
-
-With these decisions recorded, the project can enter Milestone 2 without
-reopening the basic binding architecture unless §5 exposes a concrete defect.
+1. shifted predecessor-level type profiles;
+2. historical symbol classes separated from internal names;
+3. locally nameless binding;
+4. independent variable and function de Bruijn namespaces;
+5. genuine nonempty simultaneous variable-abstraction blocks;
+6. explicit structural well-scopedness rather than scope-indexed datatypes;
+7. initially extrinsic typing;
+8. terms as type-`(0)` varieties rather than a raw fourth category;
+9. indicated occurrences as auxiliary metasyntactic data;
+10. bound renaming erased at the source-to-core boundary.

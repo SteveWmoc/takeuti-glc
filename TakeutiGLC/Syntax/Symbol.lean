@@ -1,15 +1,16 @@
 import TakeutiGLC.Syntax.TypeProfile
 
 /-!
-# Symbol classes for Takeuti's GLC
+# Historical symbol classes for Takeuti's GLC
 
-This file gives a deliberately thin representation of the symbol classes from
-§1 of Takeuti's 1953 paper. It records the historical distinctions among free,
-bound, and special variables and functions, together with the five logical
-symbols used by the calculus.
+This file records the source-level symbol classes from §1 of Takeuti's 1953
+paper: free, bound, and special variables and functions, together with the five
+logical symbols used by the calculus.
 
-No binding representation is chosen here. In particular, the `index` fields are
-only opaque names for source-level symbols; they are not de Bruijn indices.
+These are **historical/source objects**, not the final binding representation.
+The stable locally nameless core uses kind-free names for free and special
+occurrences and natural-number de Bruijn indices for bound occurrences. The
+`index` fields below are therefore opaque source names, never de Bruijn indices.
 -/
 
 namespace TakeutiGLC
@@ -41,8 +42,7 @@ deriving DecidableEq, Repr
 A source-level variable symbol.
 
 Variables may have Takeuti's distinguished type `(0)` or any nonzero type
-profile. The natural number is only a supply of distinct names for this
-prototype.
+profile. The natural number is only a supply of distinct historical names.
 -/
 structure VariableSymbol where
   kind : VariableKind
@@ -88,8 +88,8 @@ end FunctionProfile
 /--
 A source-level function symbol.
 
-The natural number is an opaque name. It deliberately carries no binding
-semantics; that decision belongs to the later binding prototypes of Milestone 1.
+The natural number is an opaque historical name. Stable core binding semantics
+are supplied later by `TakeutiGLC.Syntax.Name` and `TakeutiGLC.Syntax.Core`.
 -/
 structure FunctionSymbol where
   kind : FunctionKind
