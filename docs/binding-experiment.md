@@ -2,13 +2,19 @@
 
 ## Status
 
-This document compares two deliberately small representations of the binding
-fragment needed for Takeuti's §§2.6, 2.8, 2.9, and 3.2. It is an experiment,
-not a decision record. The stable syntax API will be chosen only after the
-representations have also been tested against closing/opening and the shape of
-§5 substitution.
+**Historical design record.** This document captures the M1.3a state of the
+project before a binding representation was selected. The subsequent
+opening/closing experiment chose the locally nameless alternative, and
+`docs/syntax-design.md` records the stable decision. M2.1 has since promoted
+that design to `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`.
 
-The common fragment includes:
+The remainder of this document is intentionally preserved as the contemporaneous
+experiment report. Future-tense statements below describe what was still open
+at M1.3a; they are not the current project status.
+
+This document compares two deliberately small representations of the binding
+fragment needed for Takeuti's §§2.6, 2.8, 2.9, and 3.2. The common fragment
+includes:
 
 - free, special, and bound variable occurrences;
 - free, special, and bound function occurrences;
@@ -137,14 +143,14 @@ For an `i`-variable abstraction block, existing outer variable indices must be
 embedded past `i` newly bound positions. The prototype therefore predicts that
 renaming, closing, and substitution will carry nontrivial dependent bookkeeping.
 
-The experiment has already exposed one additional implementation cost: Lean's
-positivity checker does not accept `List (Variety v f)` directly as a recursive
-field of this mutually indexed family, so the prototype uses a mutually defined
+The experiment also exposed an implementation cost: Lean's positivity checker
+does not accept `List (Variety v f)` directly as a recursive field of this
+mutually indexed family, so the prototype uses a mutually defined
 `Arguments v f` spine instead.
 
-That bookkeeping is not necessarily a defect: it may buy simpler theorems later
-by ruling out malformed syntax from the start. M1.3 has not yet tested that
-tradeoff against opening and closing.
+That bookkeeping is not intrinsically a defect: it buys stronger raw scope
+invariants. The following M1.3b experiment was designed to determine whether the
+tradeoff remained favorable once opening and closing were implemented.
 
 ## 3. Locally nameless prototype
 
@@ -200,11 +206,13 @@ intended long-term outcome is that source expressions differing only by bound
 renaming translate to the same internal object, so that the calculus does not
 need a pervasive quotient by alpha-equivalence.
 
-This remains a design expectation, not yet a proved correspondence theorem.
+This remains a design expectation until the historical source translation and
+homology correspondence theorem are formalized.
 
-## 5. What this first experiment establishes
+## 5. What this first experiment established
 
-The first prototype slice gives several firm conclusions.
+The first prototype slice gave several conclusions that survived into the
+stable design.
 
 1. Separate variable and function binder namespaces are natural in both
    representations.
@@ -216,30 +224,18 @@ The first prototype slice gives several firm conclusions.
    occurrences should be indices only.
 5. Eliminating bound source names from the core should make alpha-equivalence
    substantially simpler than a literal transcription.
-6. The central tradeoff is now explicit:
+6. The central tradeoff is explicit:
    - intrinsically scoped de Bruijn syntax pays for scope correctness in the
      types of transformations;
    - locally nameless syntax keeps transformations on a stable raw datatype but
-     pays for scope correctness in local-closure proofs.
+     pays for scope correctness in well-scopedness proofs.
 
-This is enough to justify a second, more discriminating experiment, but not yet
-enough to choose the final representation.
+## 6. Subsequent outcome
 
-## 6. Next experiment
-
-Before Milestone 1 chooses a representation, both prototypes should implement
-the smallest operations that model Takeuti's binder formation directly:
-
-1. close one free variable under a variable binder;
-2. close one free function under a function binder;
-3. close a nonempty list of free variables for a §2.6 abstraction block;
-4. open the corresponding bound occurrences again;
-5. state the elementary open/close round-trip laws under suitable freshness or
-   scope hypotheses.
-
-The comparison should focus on proof burden, not line count alone. In
-particular, the experiment should record how much machinery is required for
-cutoffs, index lifting, local closure, and the two independent binder classes.
-
-Only after that experiment should `docs/syntax-design.md` recommend the stable
-binding representation.
+M1.3b implemented opening and closing in both prototypes. The dependent scope
+arithmetic of the intrinsically scoped version recurred throughout ordinary
+transformations, while the locally nameless operations remained structurally
+close to Takeuti's recursion. Milestone 1 therefore selected locally nameless
+syntax. See [`opening-closing-experiment.md`](opening-closing-experiment.md) for
+the comparison and [`syntax-design.md`](syntax-design.md) for the normative
+decision.
