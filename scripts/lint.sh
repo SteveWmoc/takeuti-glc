@@ -30,9 +30,9 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(
-  find TakeutiGLC docs .github -type f \
-    \( -name '*.lean' -o -name '*.md' -o -name '*.yml' -o -name '*.yaml' \) -print
-  printf '%s\n' README.md ROADMAP.md CONTRIBUTING.md TakeutiGLC.lean lakefile.lean
+  find TakeutiGLC docs .github scripts -type f \
+    \( -name '*.lean' -o -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.sh' \) -print
+  printf '%s\n' README.md ROADMAP.md CONTRIBUTING.md TakeutiGLC.lean lakefile.lean .editorconfig
 )
 
 echo '[lint] tabs in Lean source'
