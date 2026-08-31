@@ -4,7 +4,9 @@
 
 This document records the **source-level** syntax conventions in §§1–3 of Gaisi Takeuti's 1953 paper *On a generalized logic calculus*. It is intended to remain readable independently of the Lean implementation.
 
-Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 has now implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`. The exact §§2–3 typing/well-formedness judgment and the auxiliary occurrence-selection mechanism are still to be implemented.
+Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 adds the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`.
+
+The typing relation enforces profile compatibility and the type-formational content of §§2–3. It is deliberately not yet a complete source-figure recognizer: §§2.8–2.9 require the quantified free variable or function to occur in the premiss formula, and §3.2 depends on the partial-indication convention of §3.1. Those occurrence-sensitive conditions are the next Milestone 2 layer.
 
 The primary source is included in this repository as [`Takeuti53.pdf`](../Takeuti53.pdf). The implementation design is recorded separately in [`syntax-design.md`](syntax-design.md).
 
@@ -296,14 +298,17 @@ The following questions were open when this specification was first drafted and 
 - variable and function binders use independent de Bruijn namespaces;
 - free and special internal names are kind-free, while the historical `VariableSymbol`/`FunctionSymbol` layer remains available for source transcription;
 - `Variety`, `Formula`, and `Functional` are the raw syntactic categories;
-- a term is a variety whose eventual typing judgment assigns `(0)`;
+- a term is a variety assigned type `(0)` by `Variety.HasType`;
 - simultaneous abstraction blocks are represented as genuine nonempty blocks;
 - scope correctness is an explicit structural proposition;
+- typing uses independent lists of bound-variable types and bound-function profiles, with de Bruijn lookup in the appropriate list;
+- function applications type only as `(0)`, while abstraction nodes receive the shifted profile determined by their binder levels;
+- functional bodies are required by `Functional.HasType` to be terms;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
 
-- the exact extrinsic typing/well-formedness judgment for §§2–3;
+- occurrence-sensitive source well-formedness for the non-vacuity requirements of §§2.8–2.9;
 - the concrete occurrence-selection datatype for indication;
 - the stable opening/closing and renaming APIs;
 - the full formal correspondence between Takeuti's later homology relation and equality of translated core objects.
