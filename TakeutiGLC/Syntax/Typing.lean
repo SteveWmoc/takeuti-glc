@@ -40,11 +40,11 @@ def empty : TypingContext := ⟨[], []⟩
 
 /-- Look up the type of a bound variable at a de Bruijn index. -/
 def variableAt (ctx : TypingContext) (index : Nat) : Option TypeProfile :=
-  ctx.variableTypes.get? index
+  ctx.variableTypes[index]?
 
 /-- Look up the profile of a bound function at a de Bruijn index. -/
 def functionAt (ctx : TypingContext) (index : Nat) : Option FunctionProfile :=
-  ctx.functionProfiles.get? index
+  ctx.functionProfiles[index]?
 
 /-- Enter one variable quantifier. The new binder occupies index `0`. -/
 def underVar (ctx : TypingContext) (profile : TypeProfile) : TypingContext :=
