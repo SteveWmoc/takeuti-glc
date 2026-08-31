@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. Milestone 1 fixed the source specification and binding architecture; M2.1 promoted that design to a stable locally nameless syntax core with structural well-scopedness. The next formalization target is the extrinsic §§2–3 typing/well-formedness judgment.
+> **Project status:** Milestone 2 is underway. Milestone 1 fixed the source specification and binding architecture; M2.1 promoted that design to a stable locally nameless syntax core with structural well-scopedness, and M2.2 adds the context-indexed extrinsic typing layer for §§2–3. Occurrence-sensitive source side conditions and Takeuti's indication machinery are the next formalization target.
 
 ## Source and scope
 
@@ -26,15 +26,21 @@ The stable syntax layer currently contains:
 - raw `Variety`, `Formula`, and `Functional` syntax;
 - independent de Bruijn namespaces for bound variables and bound functions;
 - nonempty variable-abstraction blocks for §§2.6 and 3.2;
-- structural well-scopedness judgments and closedness predicates.
+- structural well-scopedness judgments and closedness predicates;
+- independent variable/function typing contexts;
+- extrinsic typing for varieties and functionals;
+- typed well-formedness for formulas and pointwise argument typing;
+- the §2.10 term condition as type `(0)`.
 
-Still to come in Milestone 2 are the extrinsic typing judgment, auxiliary occurrence selection for §3.2 and §5, opening/closing in the stable namespace, renaming and weakening, and Takeuti's capture-avoiding substitution machinery.
+Still to come in Milestone 2 are occurrence-sensitive source well-formedness for §§2.8–2.9, auxiliary occurrence selection for §3.2 and §5, opening/closing in the stable namespace, renaming and weakening, and Takeuti's capture-avoiding substitution machinery.
 
 ## Architecture
 
 Milestone 1 compared an intrinsically scoped de Bruijn encoding with a locally nameless encoding. The project selected **locally nameless syntax** because Takeuti's later metatheory is transformation-heavy: substitution, restriction, and type elevation all benefit from keeping the raw recursive syntax stable while carrying scope correctness as a separate invariant.
 
 Variable and function binders use separate de Bruijn namespaces. Historical bound names disappear at the source-to-core boundary, so ordinary core equality is intended to absorb admissible bound renaming rather than requiring a pervasive quotient by alpha-equivalence.
+
+Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies.
 
 See [`docs/syntax-design.md`](docs/syntax-design.md) for the design record.
 

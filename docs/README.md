@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1 has implemented its name/core/scope layers. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.2 have implemented its name/core/scope/typing layers. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -22,9 +22,10 @@ TakeutiGLC/Syntax/Symbol.lean
 TakeutiGLC/Syntax/Name.lean
 TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
+TakeutiGLC/Syntax/Typing.lean
 ```
 
-The stable core already fixes the following choices:
+The stable core already fixes and implements the following choices:
 
 - shifted predecessor-level type profiles;
 - a historical source-symbol layer separate from kind-free internal names;
@@ -32,9 +33,11 @@ The stable core already fixes the following choices:
 - independent de Bruijn namespaces for variables and functions;
 - nonempty simultaneous variable-abstraction blocks;
 - structural well-scopedness as an explicit proposition rather than a datatype index;
+- independent variable/function typing contexts;
+- extrinsic type formation for varieties, formulas, argument lists, and functionals;
 - terms as type-`(0)` varieties rather than a fourth raw syntax category.
 
-The next implementation layer is the extrinsic typing/well-formedness judgment for §§2–3. After that come auxiliary occurrence selection, stable opening/closing, renaming, weakening, and §5 substitution.
+The typing judgment intentionally does not yet enforce the occurrence-sensitive side condition in §§2.8–2.9 that the quantified free symbol occur in the premiss formula. The next implementation layer is occurrence analysis/selection, which will support that source-level condition as well as partial indication in §3.2 and later §5 substitution. After that come stable opening/closing, renaming, weakening, and substitution.
 
 ## Reading order
 
