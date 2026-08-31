@@ -29,8 +29,8 @@ def abstractionBinderTypes (headLevel : Nat) (tailLevels : List Nat) : List Type
 
 /-- Independent de Bruijn typing contexts for bound variables and functions. -/
 structure TypingContext where
-  variables : List TypeProfile
-  functions : List FunctionProfile
+  variableTypes : List TypeProfile
+  functionProfiles : List FunctionProfile
 deriving DecidableEq, Repr
 
 namespace TypingContext
@@ -40,19 +40,19 @@ def empty : TypingContext := ⟨[], []⟩
 
 /-- Look up the type of a bound variable at a de Bruijn index. -/
 def variableAt (ctx : TypingContext) (index : Nat) : Option TypeProfile :=
-  ctx.variables.get? index
+  ctx.variableTypes.get? index
 
 /-- Look up the profile of a bound function at a de Bruijn index. -/
 def functionAt (ctx : TypingContext) (index : Nat) : Option FunctionProfile :=
-  ctx.functions.get? index
+  ctx.functionProfiles.get? index
 
 /-- Enter one variable quantifier. The new binder occupies index `0`. -/
 def underVar (ctx : TypingContext) (profile : TypeProfile) : TypingContext :=
-  { ctx with variables := profile :: ctx.variables }
+  { ctx with variableTypes := profile :: ctx.variableTypes }
 
 /-- Enter one function quantifier. The new binder occupies index `0`. -/
 def underFun (ctx : TypingContext) (profile : FunctionProfile) : TypingContext :=
-  { ctx with functions := profile :: ctx.functions }
+  { ctx with functionProfiles := profile :: ctx.functionProfiles }
 
 /--
 Enter one simultaneous variable-abstraction block.
@@ -62,11 +62,12 @@ index `0`, the second has index `1`, and so on.
 -/
 def underBlock (ctx : TypingContext) (headLevel : Nat) (tailLevels : List Nat) :
     TypingContext :=
-  { ctx with variables := abstractionBinderTypes headLevel tailLevels ++ ctx.variables }
+  { ctx with
+    variableTypes := abstractionBinderTypes headLevel tailLevels ++ ctx.variableTypes }
 
 /-- Forget typing information and retain only the two structural scope depths. -/
 def scope (ctx : TypingContext) : Scope :=
-  ⟨ctx.variables.length, ctx.functions.length⟩
+  ⟨ctx.variableTypes.length, ctx.functionProfiles.length⟩
 
 @[simp] theorem variableAt_underVar_zero (ctx : TypingContext) (profile : TypeProfile) :
     (ctx.underVar profile).variableAt 0 = some profile := rfl
