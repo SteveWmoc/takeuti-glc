@@ -4,15 +4,16 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-The design is no longer merely prospective: M2.1 has implemented the stable name, raw-syntax, and structural-scope layers in
+The design is no longer merely prospective. M2.1–M2.2 have implemented the stable name, raw-syntax, structural-scope, and typing layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
 TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
+TakeutiGLC/Syntax/Typing.lean
 ```
 
-The next implementation target is the extrinsic typing/well-formedness judgment for §§2–3. Renaming, occurrence selection, stable opening/closing, and §5 substitution remain downstream.
+The next implementation target is occurrence analysis/selection: it must support the non-vacuity side conditions in §§2.8–2.9 and Takeuti's partial-indication convention in §3.1 used by §3.2 and §5. Renaming, stable opening/closing, and §5 substitution remain downstream.
 
 This decision was based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -75,7 +76,7 @@ boundVar / atomBound      bound variable index
 
 freeFunApp                free function occurrence
 specialFunApp             special function occurrence
-boundFunApp                bound function index
+boundFunApp               bound function index
 ```
 
 Historical bound names are used only while translating or presenting source notation; they are not part of the identity of a bound core occurrence.
@@ -88,7 +89,7 @@ The permanent raw syntax has three main categories:
 - `Formula`;
 - `Functional`.
 
-A **term** is not a fourth raw category. Following §2.10, it will be a variety assigned type `(0)` by the typing judgment.
+A **term** is not a fourth raw category. Following §2.10, it is a variety assigned type `(0)` by the typing judgment.
 
 The implemented raw shape is intentionally simple and uses ordinary recursive argument lists:
 
@@ -139,25 +140,40 @@ higher n [n₂, ..., nᵢ] ↔ (n+1, n₂+1, ..., nᵢ+1)
 
 The stored predecessor levels are exactly the levels required for argument places in §§2.3–2.6 and §3.2.
 
-Typing is intentionally **extrinsic** at the current boundary. The planned contexts have the conceptual form
+Typing is **extrinsic**. `TakeutiGLC/Syntax/Typing.lean` implements contexts of the conceptual form
 
 ```text
 variable context : List TypeProfile
 function context : List FunctionProfile
 ```
 
-and a bound de Bruijn index is typed by lookup in the appropriate context. Free and special names carry their own profiles.
+with the first list element at de Bruijn index `0`. Variable quantifiers cons onto only the variable context, function quantifiers cons onto only the function context, and an abstraction block prepends its singleton binder types in display order.
 
-The typing/well-formedness judgment must enforce the source formation rules:
+The implemented judgments are:
 
-- argument arity and profile compatibility;
-- result type `(0)` for function applications;
+```text
+Variety.HasType
+Formula.WellFormed
+VarietiesHaveTypes
+Functional.HasType
+```
+
+They enforce:
+
+- base free/special variables only as varieties of type `(0)`;
+- nonzero variable heads for atomic formulas;
+- typed lookup of bound variable and function indices in the appropriate context;
+- argument arity and profile compatibility via pointwise argument typing;
+- result type `(0)` for free, special, and bound function applications;
 - abstraction result profiles;
-- the term condition on functional bodies;
-- variable-quantifier profile lookup in the variable namespace;
-- function-quantifier profile lookup in the function namespace.
+- independent variable/function quantifier contexts;
+- the term condition on functional bodies.
 
-Making this judgment explicit keeps the raw recursion simple and exposes Takeuti's own formation conditions instead of burying them inside dependent constructor types.
+`Variety.IsTerm` is therefore exactly `Variety.HasType ... .zero`, implementing §2.10 at the stable typing layer.
+
+The typing judgment does **not** yet claim to recognize exactly the source figures of §§2–3. In §§2.8–2.9 Takeuti requires the free symbol being quantified to occur in the premiss formula. That non-vacuity condition is occurrence-sensitive rather than type-formational and is intentionally deferred to the occurrence layer. Likewise, §3.2 requires auxiliary indication data from §3.1.
+
+Making typing explicit keeps the raw recursion simple and exposes Takeuti's type conditions instead of burying them inside dependent constructor types.
 
 ## 6. Structural well-scopedness
 
@@ -181,7 +197,7 @@ with these rules:
 
 A closed core expression is well scoped at the empty two-depth scope.
 
-The later typed judgment may imply structural scope, but retaining a lightweight scope proposition is useful for generic opening, closing, renaming, and substitution lemmas.
+`TypingContext.scope` forgets the stored profiles and retains exactly these two lengths. A later metatheory PR should prove that typing implies structural well-scopedness; retaining the lightweight scope proposition is still useful for generic opening, closing, renaming, and substitution lemmas that do not otherwise depend on types.
 
 ## 7. De Bruijn convention
 
@@ -211,13 +227,13 @@ A bound source variable name is never stored as a named core occurrence; inside 
 
 Free and special higher-type variable applications become `Formula.atomFree` and `Formula.atomSpecial` respectively. If the head denotes a variable bound by an enclosing source binder, it becomes `Formula.atomBound`.
 
-The future typing judgment checks that argument varieties have the types prescribed by the head profile.
+`Formula.WellFormed` requires a nonzero head profile and arguments typed by the profile's `argumentTypes`.
 
 ### 8.3 Function application — §2.5
 
 Applications of free and special functions become `freeFunApp` and `specialFunApp`. A function occurrence bound by an enclosing function quantifier becomes `boundFunApp`.
 
-The typing judgment will require matching argument profiles and result type `(0)`.
+`Variety.HasType` requires matching argument profiles and assigns every such application type `(0)`.
 
 ### 8.4 Higher-type abstraction — §2.6
 
@@ -231,7 +247,7 @@ the printed bound names are used only while translating `A`. The variable enviro
 
 Section 2.6 replaces **every occurrence** of the selected free variables. A slot may nevertheless be vacuous if its selected free variable does not occur in `A`.
 
-The core node stores predecessor levels and the translated body, not the source binder names. Its type is `(n₁+1, ..., nᵢ+1)` according to the future typing judgment.
+The core node stores predecessor levels and the translated body, not the source binder names. `Variety.HasType` assigns it `(n₁+1, ..., nᵢ+1)` when the body is a well-formed formula under the corresponding block-extended context.
 
 ### 8.5 Propositional connectives — §2.7
 
@@ -241,9 +257,13 @@ The core node stores predecessor levels and the translated body, not the source 
 
 For `∀φ A` or `Eφ A`, the binder profile is stored on the quantifier node. The source name extends only the variable environment at index `0`; the function environment is unchanged.
 
+`Formula.WellFormed` checks the body under that extended typing context. The separate source-level requirement that the quantified free variable occurred before binding is not yet encoded.
+
 ### 8.7 Function quantification — §2.9
 
 For `∀p A` or `Ep A`, the binder profile is stored on the quantifier node. The source name extends only the function environment at index `0`; the variable environment is unchanged.
+
+`Formula.WellFormed` checks the body under that extended typing context. The separate source-level occurrence requirement remains for the occurrence layer.
 
 ### 8.8 Functionals — §3.2
 
@@ -262,7 +282,7 @@ Section 3.1 permits only some occurrences of a free variable to be indicated. Se
 
 Full indication is the special case in which every occurrence is selected.
 
-The body translates as a `Variety`; the typing judgment additionally requires it to be a term, i.e. to have type `(0)`.
+The body translates as a `Variety`; `Functional.HasType` requires that body to have type `(0)` under the block-extended variable context and assigns the functional the corresponding shifted abstraction profile.
 
 ## 9. Indicated occurrences
 
@@ -292,12 +312,12 @@ Implemented:
 TakeutiGLC/Syntax/Name.lean
 TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
+TakeutiGLC/Syntax/Typing.lean
 ```
 
 Expected next modules, with exact names still adjustable:
 
 ```text
-TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -316,7 +336,7 @@ The project currently treats the following as fixed unless later proof work supp
 4. independent variable and function de Bruijn namespaces;
 5. genuine nonempty simultaneous variable-abstraction blocks;
 6. explicit structural well-scopedness rather than scope-indexed datatypes;
-7. initially extrinsic typing;
+7. extrinsic typing with independent variable/function contexts;
 8. terms as type-`(0)` varieties rather than a raw fourth category;
 9. indicated occurrences as auxiliary metasyntactic data;
 10. bound renaming erased at the source-to-core boundary.
