@@ -28,7 +28,8 @@ Active development is organized in milestones so that foundational representatio
 
 - [x] Promote the chosen locally nameless representation to stable core syntax.
 - [x] Define structural well-scopedness with independent variable/function depths.
-- [ ] Define the extrinsic typing/well-formedness judgment for §§2–3.
+- [x] Define the extrinsic typing judgment for §§2–3.
+- [ ] Complete source-level well-formedness side conditions for non-vacuous quantifiers.
 - [ ] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
 - [ ] Promote opening/closing operations to the stable syntax namespace.
 - [ ] Define renaming and weakening for every syntactic category.
