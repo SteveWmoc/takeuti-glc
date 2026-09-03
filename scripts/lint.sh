@@ -13,6 +13,17 @@ if grep -RInE --include='*.lean' '(^|[^[:alnum:]_])(sorry|admit)([^[:alnum:]_]|$
   fail 'Lean proof placeholders are not permitted.'
 fi
 
+echo '[lint] toolchain and mathlib alignment'
+lean_tag=$(sed -n 's#^leanprover/lean4:\(v.*\)$#\1#p' lean-toolchain)
+mathlib_tag=$(sed -n 's/.*@ "\(v[^"]*\)".*/\1/p' lakefile.lean | head -n 1)
+if [[ -z "${lean_tag}" || -z "${mathlib_tag}" ]]; then
+  fail 'Could not read the pinned Lean or mathlib release tag.'
+elif [[ "${lean_tag}" != "${mathlib_tag}" ]]; then
+  fail "Lean toolchain ${lean_tag} does not match mathlib ${mathlib_tag}."
+elif ! grep -Fq "\"inputRev\": \"${mathlib_tag}\"" lake-manifest.json; then
+  fail "lake-manifest.json does not record mathlib ${mathlib_tag}."
+fi
+
 echo '[lint] public module coverage'
 while IFS= read -r file; do
   module="${file%.lean}"
