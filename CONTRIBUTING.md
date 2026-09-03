@@ -47,4 +47,13 @@ Changes that alter the binding convention, type-profile interpretation, or sourc
 
 ## Dependency policy
 
-Lean and mathlib are pinned together. Do not run `lake update` merely to build the project; use it only when intentionally changing or refreshing dependencies, and commit the resulting `lake-manifest.json` change when appropriate.
+Lean and mathlib are pinned together to the same stable release tag. Release candidates are not used on `main` unless a specific compatibility experiment requires them.
+
+A deliberate toolchain upgrade should update, in the same pull request:
+
+- `lean-toolchain`;
+- the mathlib revision in `lakefile.lean`;
+- `lake-manifest.json`;
+- any documentation that names the pinned release.
+
+Run `lake update` only when intentionally changing or refreshing dependencies, then commit the resulting manifest. `lake lint` checks that the Lean and mathlib release tags remain aligned.
