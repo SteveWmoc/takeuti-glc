@@ -86,4 +86,5 @@ These checks apply across milestones rather than constituting a separate mathema
 - [x] Run a project `lake lint` driver in CI.
 - [x] Treat Lean warnings as CI failures.
 - [x] Check trailing whitespace and tabs in Lean source.
+- [x] Check that Lean, mathlib, and the dependency manifest remain release-aligned.
 - [ ] Add theorem-level regression tests as the stable metatheory grows.

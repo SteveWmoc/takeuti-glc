@@ -57,7 +57,7 @@ See [`docs/syntax-design.md`](docs/syntax-design.md) for the design record.
 
 ## Build and QA
 
-The project is pinned to Lean 4.32.1 and the matching mathlib release.
+The project is pinned to Lean 4.33.1 and the matching mathlib release. Release-candidate toolchains are not used for the main development branch.
 
 ```bash
 lake build
@@ -70,9 +70,9 @@ For the same warning policy used in CI:
 lake build --wfail
 ```
 
-`lake lint` runs repository-level QA checks, including the no-placeholder policy, public-module coverage, trailing-whitespace checks, and Lean-source tab checks. CI runs both `lake build --wfail` and `lake lint`.
+`lake lint` runs repository-level QA checks, including the no-placeholder policy, Lean/mathlib pin alignment, public-module coverage, trailing-whitespace checks, and Lean-source tab checks. CI runs both `lake build --wfail` and `lake lint`.
 
-Use `lake update` only when intentionally refreshing the dependency manifest.
+Use `lake update` only when intentionally refreshing the dependency manifest, and commit the resulting manifest together with the corresponding toolchain and mathlib pin changes.
 
 ## Repository layout
 
