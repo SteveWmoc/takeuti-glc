@@ -16,12 +16,17 @@ fi
 echo '[lint] toolchain and mathlib alignment'
 lean_tag=$(sed -n 's#^leanprover/lean4:\(v.*\)$#\1#p' lean-toolchain)
 mathlib_tag=$(sed -n 's/.*@ "\(v[^"]*\)".*/\1/p' lakefile.lean | head -n 1)
-if [[ -z "${lean_tag}" || -z "${mathlib_tag}" ]]; then
-  fail 'Could not read the pinned Lean or mathlib release tag.'
+manifest_mathlib_tag=$(
+  grep -A 3 '"name": "mathlib"' lake-manifest.json |
+    sed -n 's/.*"inputRev": "\([^"]*\)".*/\1/p' |
+    head -n 1
+)
+if [[ -z "${lean_tag}" || -z "${mathlib_tag}" || -z "${manifest_mathlib_tag}" ]]; then
+  fail 'Could not read the pinned Lean, mathlib, or manifest release tag.'
 elif [[ "${lean_tag}" != "${mathlib_tag}" ]]; then
   fail "Lean toolchain ${lean_tag} does not match mathlib ${mathlib_tag}."
-elif ! grep -Fq "\"inputRev\": \"${mathlib_tag}\"" lake-manifest.json; then
-  fail "lake-manifest.json does not record mathlib ${mathlib_tag}."
+elif [[ "${manifest_mathlib_tag}" != "${mathlib_tag}" ]]; then
+  fail "lake-manifest.json records mathlib ${manifest_mathlib_tag}, expected ${mathlib_tag}."
 fi
 
 echo '[lint] public module coverage'
