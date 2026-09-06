@@ -4,9 +4,9 @@
 
 This document records the **source-level** syntax conventions in §§1–3 of Gaisi Takeuti's 1953 paper *On a generalized logic calculus*. It is intended to remain readable independently of the Lean implementation.
 
-Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 adds the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`.
+Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 adds structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`.
 
-The typing relation enforces profile compatibility and the type-formational content of §§2–3. It is deliberately not yet a complete source-figure recognizer: §§2.8–2.9 require the quantified free variable or function to occur in the premiss formula, and §3.2 depends on the partial-indication convention of §3.1. Those occurrence-sensitive conditions are the next Milestone 2 layer.
+The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer now supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing will next connect those selections to the executable §3.2 and §5 transformations.
 
 The primary source is included in this repository as [`Takeuti53.pdf`](../Takeuti53.pdf). The implementation design is recorded separately in [`syntax-design.md`](syntax-design.md).
 
@@ -273,7 +273,7 @@ A functional abstracts from a **term**; §2.6 abstracts from a **formula** to pr
 
 For a formula, variety, or functional written as `A(α)`, Takeuti calls the notation **full indication** exactly when every occurrence of `α` in `A` is indicated.
 
-Indication becomes central in §5 substitution. The stable raw syntax deliberately does not add an `indicated` constructor; Milestone 2 will instead introduce auxiliary occurrence-selection data usable both by §3.2 translation and §5 operations.
+Indication becomes central in §5 substitution. `TakeutiGLC/Syntax/Occurrence.lean` implements it as finite auxiliary selections of structural occurrence paths, with separate variable and function selections and predicates for §3.3 full indication. The stable raw syntax therefore still has no `indicated` constructor.
 
 ## 6. Formation-rule summary
 
@@ -304,11 +304,12 @@ The following questions were open when this specification was first drafted and 
 - typing uses independent lists of bound-variable types and bound-function profiles, with de Bruijn lookup in the appropriate list;
 - function applications type only as `(0)`, while abstraction nodes receive the shifted profile determined by their binder levels;
 - functional bodies are required by `Functional.HasType` to be terms;
+- occurrence indication is represented by finite sets of structural paths external to raw syntax identity;
+- variable/function binder-use predicates express the non-vacuity requirements of §§2.8–2.9 on translated core bodies;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
 
-- occurrence-sensitive source well-formedness for the non-vacuity requirements of §§2.8–2.9;
-- the concrete occurrence-selection datatype for indication;
 - the stable opening/closing and renaming APIs;
+- executable closing of the indicated occurrences used by §3.2;
 - the full formal correspondence between Takeuti's later homology relation and equality of translated core objects.
