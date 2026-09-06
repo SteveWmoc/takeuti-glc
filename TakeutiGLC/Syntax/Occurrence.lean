@@ -124,13 +124,11 @@ end Functional
 structure VariableOccurrenceSelection where
   name : VariableName
   paths : Finset OccurrencePath
-deriving DecidableEq, Repr
 
 /-- Finite §3.1 indication data for occurrences of one free function. -/
 structure FunctionOccurrenceSelection where
   name : FunctionName
   paths : Finset OccurrencePath
-deriving DecidableEq, Repr
 
 namespace VariableOccurrenceSelection
 
@@ -199,55 +197,59 @@ end FunctionOccurrenceSelection
 mutual
 
 /-- A bound variable at `cutoff` occurs in a variety, accounting for nested binders. -/
-inductive Variety.UsesBoundVariableAt (cutoff : Nat) : Variety → Prop where
-  | boundVar {index : Nat} (hindex : index = cutoff) :
+inductive Variety.UsesBoundVariableAt : Nat → Variety → Prop where
+  | boundVar {cutoff index : Nat} (hindex : index = cutoff) :
       Variety.UsesBoundVariableAt cutoff (.boundVar index)
-  | freeFunArg {name : FunctionName} {args : List Variety} {arg : Variety}
+  | freeFunArg {cutoff : Nat} {name : FunctionName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Variety.UsesBoundVariableAt cutoff (.freeFunApp name args)
-  | specialFunArg {name : FunctionName} {args : List Variety} {arg : Variety}
+  | specialFunArg {cutoff : Nat} {name : FunctionName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Variety.UsesBoundVariableAt cutoff (.specialFunApp name args)
-  | boundFunArg {index : Nat} {args : List Variety} {arg : Variety}
+  | boundFunArg {cutoff index : Nat} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Variety.UsesBoundVariableAt cutoff (.boundFunApp index args)
-  | abstract {headLevel : Nat} {tailLevels : List Nat} {body : Formula}
+  | abstract {cutoff headLevel : Nat} {tailLevels : List Nat} {body : Formula}
       (hbody : Formula.UsesBoundVariableAt (cutoff + blockSize tailLevels) body) :
       Variety.UsesBoundVariableAt cutoff (.abstract headLevel tailLevels body)
 
 /-- A bound variable at `cutoff` occurs in a formula, accounting for nested binders. -/
-inductive Formula.UsesBoundVariableAt (cutoff : Nat) : Formula → Prop where
-  | atomBound {index : Nat} {args : List Variety} (hindex : index = cutoff) :
+inductive Formula.UsesBoundVariableAt : Nat → Formula → Prop where
+  | atomBound {cutoff index : Nat} {args : List Variety} (hindex : index = cutoff) :
       Formula.UsesBoundVariableAt cutoff (.atomBound index args)
-  | atomFreeArg {name : VariableName} {args : List Variety} {arg : Variety}
+  | atomFreeArg {cutoff : Nat} {name : VariableName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Formula.UsesBoundVariableAt cutoff (.atomFree name args)
-  | atomSpecialArg {name : VariableName} {args : List Variety} {arg : Variety}
+  | atomSpecialArg {cutoff : Nat} {name : VariableName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Formula.UsesBoundVariableAt cutoff (.atomSpecial name args)
-  | atomBoundArg {index : Nat} {args : List Variety} {arg : Variety}
+  | atomBoundArg {cutoff index : Nat} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundVariableAt cutoff arg) :
       Formula.UsesBoundVariableAt cutoff (.atomBound index args)
-  | neg {body : Formula} (hbody : Formula.UsesBoundVariableAt cutoff body) :
+  | neg {cutoff : Nat} {body : Formula} (hbody : Formula.UsesBoundVariableAt cutoff body) :
       Formula.UsesBoundVariableAt cutoff (.neg body)
-  | conjLeft {left right : Formula} (hleft : Formula.UsesBoundVariableAt cutoff left) :
+  | conjLeft {cutoff : Nat} {left right : Formula}
+      (hleft : Formula.UsesBoundVariableAt cutoff left) :
       Formula.UsesBoundVariableAt cutoff (.conj left right)
-  | conjRight {left right : Formula} (hright : Formula.UsesBoundVariableAt cutoff right) :
+  | conjRight {cutoff : Nat} {left right : Formula}
+      (hright : Formula.UsesBoundVariableAt cutoff right) :
       Formula.UsesBoundVariableAt cutoff (.conj left right)
-  | disjLeft {left right : Formula} (hleft : Formula.UsesBoundVariableAt cutoff left) :
+  | disjLeft {cutoff : Nat} {left right : Formula}
+      (hleft : Formula.UsesBoundVariableAt cutoff left) :
       Formula.UsesBoundVariableAt cutoff (.disj left right)
-  | disjRight {left right : Formula} (hright : Formula.UsesBoundVariableAt cutoff right) :
+  | disjRight {cutoff : Nat} {left right : Formula}
+      (hright : Formula.UsesBoundVariableAt cutoff right) :
       Formula.UsesBoundVariableAt cutoff (.disj left right)
-  | allVar {profile : TypeProfile} {body : Formula}
+  | allVar {cutoff : Nat} {profile : TypeProfile} {body : Formula}
       (hbody : Formula.UsesBoundVariableAt (cutoff + 1) body) :
       Formula.UsesBoundVariableAt cutoff (.allVar profile body)
-  | existsVar {profile : TypeProfile} {body : Formula}
+  | existsVar {cutoff : Nat} {profile : TypeProfile} {body : Formula}
       (hbody : Formula.UsesBoundVariableAt (cutoff + 1) body) :
       Formula.UsesBoundVariableAt cutoff (.existsVar profile body)
-  | allFun {profile : FunctionProfile} {body : Formula}
+  | allFun {cutoff : Nat} {profile : FunctionProfile} {body : Formula}
       (hbody : Formula.UsesBoundVariableAt cutoff body) :
       Formula.UsesBoundVariableAt cutoff (.allFun profile body)
-  | existsFun {profile : FunctionProfile} {body : Formula}
+  | existsFun {cutoff : Nat} {profile : FunctionProfile} {body : Formula}
       (hbody : Formula.UsesBoundVariableAt cutoff body) :
       Formula.UsesBoundVariableAt cutoff (.existsFun profile body)
 
@@ -256,53 +258,57 @@ end
 mutual
 
 /-- A bound function at `cutoff` occurs in a variety, accounting for nested binders. -/
-inductive Variety.UsesBoundFunctionAt (cutoff : Nat) : Variety → Prop where
-  | boundFun {index : Nat} {args : List Variety} (hindex : index = cutoff) :
+inductive Variety.UsesBoundFunctionAt : Nat → Variety → Prop where
+  | boundFun {cutoff index : Nat} {args : List Variety} (hindex : index = cutoff) :
       Variety.UsesBoundFunctionAt cutoff (.boundFunApp index args)
-  | freeFunArg {name : FunctionName} {args : List Variety} {arg : Variety}
+  | freeFunArg {cutoff : Nat} {name : FunctionName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Variety.UsesBoundFunctionAt cutoff (.freeFunApp name args)
-  | specialFunArg {name : FunctionName} {args : List Variety} {arg : Variety}
+  | specialFunArg {cutoff : Nat} {name : FunctionName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Variety.UsesBoundFunctionAt cutoff (.specialFunApp name args)
-  | boundFunArg {index : Nat} {args : List Variety} {arg : Variety}
+  | boundFunArg {cutoff index : Nat} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Variety.UsesBoundFunctionAt cutoff (.boundFunApp index args)
-  | abstract {headLevel : Nat} {tailLevels : List Nat} {body : Formula}
+  | abstract {cutoff headLevel : Nat} {tailLevels : List Nat} {body : Formula}
       (hbody : Formula.UsesBoundFunctionAt cutoff body) :
       Variety.UsesBoundFunctionAt cutoff (.abstract headLevel tailLevels body)
 
 /-- A bound function at `cutoff` occurs in a formula, accounting for nested binders. -/
-inductive Formula.UsesBoundFunctionAt (cutoff : Nat) : Formula → Prop where
-  | atomFreeArg {name : VariableName} {args : List Variety} {arg : Variety}
+inductive Formula.UsesBoundFunctionAt : Nat → Formula → Prop where
+  | atomFreeArg {cutoff : Nat} {name : VariableName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Formula.UsesBoundFunctionAt cutoff (.atomFree name args)
-  | atomSpecialArg {name : VariableName} {args : List Variety} {arg : Variety}
+  | atomSpecialArg {cutoff : Nat} {name : VariableName} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Formula.UsesBoundFunctionAt cutoff (.atomSpecial name args)
-  | atomBoundArg {index : Nat} {args : List Variety} {arg : Variety}
+  | atomBoundArg {cutoff index : Nat} {args : List Variety} {arg : Variety}
       (hmem : arg ∈ args) (harg : Variety.UsesBoundFunctionAt cutoff arg) :
       Formula.UsesBoundFunctionAt cutoff (.atomBound index args)
-  | neg {body : Formula} (hbody : Formula.UsesBoundFunctionAt cutoff body) :
+  | neg {cutoff : Nat} {body : Formula} (hbody : Formula.UsesBoundFunctionAt cutoff body) :
       Formula.UsesBoundFunctionAt cutoff (.neg body)
-  | conjLeft {left right : Formula} (hleft : Formula.UsesBoundFunctionAt cutoff left) :
+  | conjLeft {cutoff : Nat} {left right : Formula}
+      (hleft : Formula.UsesBoundFunctionAt cutoff left) :
       Formula.UsesBoundFunctionAt cutoff (.conj left right)
-  | conjRight {left right : Formula} (hright : Formula.UsesBoundFunctionAt cutoff right) :
+  | conjRight {cutoff : Nat} {left right : Formula}
+      (hright : Formula.UsesBoundFunctionAt cutoff right) :
       Formula.UsesBoundFunctionAt cutoff (.conj left right)
-  | disjLeft {left right : Formula} (hleft : Formula.UsesBoundFunctionAt cutoff left) :
+  | disjLeft {cutoff : Nat} {left right : Formula}
+      (hleft : Formula.UsesBoundFunctionAt cutoff left) :
       Formula.UsesBoundFunctionAt cutoff (.disj left right)
-  | disjRight {left right : Formula} (hright : Formula.UsesBoundFunctionAt cutoff right) :
+  | disjRight {cutoff : Nat} {left right : Formula}
+      (hright : Formula.UsesBoundFunctionAt cutoff right) :
       Formula.UsesBoundFunctionAt cutoff (.disj left right)
-  | allVar {profile : TypeProfile} {body : Formula}
+  | allVar {cutoff : Nat} {profile : TypeProfile} {body : Formula}
       (hbody : Formula.UsesBoundFunctionAt cutoff body) :
       Formula.UsesBoundFunctionAt cutoff (.allVar profile body)
-  | existsVar {profile : TypeProfile} {body : Formula}
+  | existsVar {cutoff : Nat} {profile : TypeProfile} {body : Formula}
       (hbody : Formula.UsesBoundFunctionAt cutoff body) :
       Formula.UsesBoundFunctionAt cutoff (.existsVar profile body)
-  | allFun {profile : FunctionProfile} {body : Formula}
+  | allFun {cutoff : Nat} {profile : FunctionProfile} {body : Formula}
       (hbody : Formula.UsesBoundFunctionAt (cutoff + 1) body) :
       Formula.UsesBoundFunctionAt cutoff (.allFun profile body)
-  | existsFun {profile : FunctionProfile} {body : Formula}
+  | existsFun {cutoff : Nat} {profile : FunctionProfile} {body : Formula}
       (hbody : Formula.UsesBoundFunctionAt (cutoff + 1) body) :
       Formula.UsesBoundFunctionAt cutoff (.existsFun profile body)
 
