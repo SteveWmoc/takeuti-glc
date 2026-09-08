@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.3 have implemented its name/core/scope/typing/occurrence layers. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.4 have implemented its name/core/scope/typing/occurrence/open-close layers. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -24,6 +24,7 @@ TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
+TakeutiGLC/Syntax/OpenClose.lean
 ```
 
 The stable core already fixes and implements the following choices:
@@ -39,9 +40,11 @@ The stable core already fixes and implements the following choices:
 - terms as type-`(0)` varieties rather than a fourth raw syntax category;
 - structural occurrence paths for free variables and free functions;
 - finite metasyntactic occurrence selections for §3.1 partial indication and §3.3 full indication;
-- explicit binder-use predicates recovering the non-vacuity side conditions of §§2.8–2.9 after source-to-core closing.
+- explicit binder-use predicates recovering the non-vacuity side conditions of §§2.8–2.9 after source-to-core closing;
+- cutoff-aware opening and closing in both binder namespaces;
+- simultaneous variable-block opening/closing preserving display order.
 
-The next implementation layer is stable opening/closing, followed by renaming and weakening. Those transformations will consume the occurrence-selection machinery when §3.2 closes only indicated variable occurrences and when §5 later performs indicated substitution.
+The next implementation layer is renaming and weakening. Selection-aware closing for §3.2 partial abstraction remains a small downstream extension of the stable opening/closing API, after which the project moves into Takeuti's §5 substitution machinery.
 
 ## Reading order
 
