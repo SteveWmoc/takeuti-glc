@@ -31,7 +31,7 @@ Active development is organized in milestones so that foundational representatio
 - [x] Define the extrinsic typing judgment for §§2–3.
 - [x] Complete source-level well-formedness side conditions for non-vacuous quantifiers.
 - [x] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
-- [ ] Promote opening/closing operations to the stable syntax namespace.
+- [x] Promote opening/closing operations to the stable syntax namespace.
 - [ ] Define renaming and weakening for every syntactic category.
 - [ ] Define capture-avoiding substitution of varieties for variables.
 - [ ] Define substitution of functionals for function symbols.
