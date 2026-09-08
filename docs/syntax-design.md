@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.3 have implemented the stable name, raw-syntax, structural-scope, typing, and occurrence layers in
+M2.1–M2.4 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, and opening/closing layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -12,9 +12,10 @@ TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
+TakeutiGLC/Syntax/OpenClose.lean
 ```
 
-The next implementation target is stable opening/closing, followed by renaming and weakening. The occurrence layer already supplies the auxiliary selection data needed for §3.2 partial abstraction and later §5 substitution.
+The next implementation target is renaming and weakening. The occurrence layer already supplies the auxiliary selection data needed for §3.2 partial abstraction and later §5 substitution; selection-aware closing remains a small downstream extension of the stable full-name opening/closing API.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -144,7 +145,7 @@ They enforce base-variable typing, nonzero atomic heads, bound-index lookup, arg
 
 `Variety.IsTerm` is exactly `Variety.HasType ... .zero`, implementing §2.10.
 
-Typing is intentionally separated from Takeuti's occurrence-sensitive conditions. M2.3 now layers the §§2.8–2.9 non-vacuity requirement on top of typing rather than baking it into the type relation.
+Typing is intentionally separated from Takeuti's occurrence-sensitive conditions. M2.3 layers the §§2.8–2.9 non-vacuity requirement on top of typing rather than baking it into the type relation.
 
 ## 6. Structural well-scopedness
 
@@ -168,7 +169,7 @@ A closed core expression is well scoped at the empty two-depth scope. `TypingCon
 
 A later metatheory lemma should prove that typing implies structural well-scopedness. The lightweight scope proposition remains useful because opening, closing, renaming, and substitution often need scope preservation independently of typing.
 
-## 7. De Bruijn convention
+## 7. De Bruijn convention and stable opening/closing
 
 A newly introduced unary binder occupies index `0` in its namespace. Existing indices at or beyond the insertion cutoff are shifted by one. Crossing a binder of the same namespace increments the cutoff; crossing a binder of the other namespace leaves it unchanged.
 
@@ -181,6 +182,8 @@ For a simultaneous Takeuti abstraction block
 the first displayed binder corresponds to block index `0`, the second to `1`, and so on. The block remains a single source-level binding construction. Repeated unary operations may be used internally without claiming that Takeuti's syntax contains nested unary abstractions.
 
 Vacuous abstraction slots are permitted, as required by §2.6.
+
+`Syntax/OpenClose.lean` realizes this convention with `insertIndex` and `removeIndex`, cutoff-aware variable/function operations on `Variety` and `Formula`, corresponding operations through `Functional`, and simultaneous variable-block operations. The two namespaces remain independent: variable binders shift only variable cutoffs, while function binders shift only function cutoffs. Crossing a Takeuti abstraction block shifts the variable cutoff by the entire block size.
 
 ## 8. Source-to-core correspondence
 
@@ -208,7 +211,7 @@ the printed bound names exist only during source translation. The variable envir
 
 Section 2.6 replaces **every occurrence** of each selected free variable. A slot may nevertheless be vacuous if its selected variable does not occur in `A`.
 
-The core node stores predecessor levels and the translated body. `Variety.HasType` assigns the shifted result profile when the body is well formed under the block-extended context.
+The core node stores predecessor levels and the translated body. `Variety.HasType` assigns the shifted result profile when the body is well formed under the block-extended context. `Formula.closeVarBlock` now provides the stable full-occurrence closing operation used by this translation pattern.
 
 ### 8.5 Propositional connectives — §2.7
 
@@ -218,13 +221,13 @@ The core node stores predecessor levels and the translated body. `Variety.HasTyp
 
 The binder profile is stored on the quantifier node and the source bound name disappears into the variable de Bruijn namespace. `Formula.WellFormed` checks the body under the extended typing context.
 
-M2.3 adds `Formula.UsesInnermostVariableBinder`: after closing, the source requirement that the quantified free variable actually occurred is represented by use of the newly introduced variable index `0`, with the expected cutoff shifts under nested variable binders and abstraction blocks.
+M2.3 adds `Formula.UsesInnermostVariableBinder`: after closing, the source requirement that the quantified free variable actually occurred is represented by use of the newly introduced variable index `0`, with the expected cutoff shifts under nested variable binders and abstraction blocks. M2.4 now supplies the stable `Formula.closeVar` operation that performs that closing.
 
 ### 8.7 Function quantification — §2.9
 
 The binder profile is stored on the function quantifier and only the function namespace is extended. `Formula.UsesInnermostFunctionBinder` analogously records the source non-vacuity requirement, shifting only across nested function binders.
 
-`QuantifierSideConditions` propagates these requirements through nested syntax, and `WellFormedWithNonvacuousQuantifiers` combines them with the M2.2 typing layer.
+`QuantifierSideConditions` propagates these requirements through nested syntax, and `WellFormedWithNonvacuousQuantifiers` combines them with the M2.2 typing layer. M2.4 supplies the corresponding stable `Formula.closeFun` operation.
 
 ### 8.8 Functionals — §3.2
 
@@ -238,7 +241,7 @@ uses the same **block-index convention** as §2.6 but a different occurrence-sel
 
 The body translates as a `Variety`; `Functional.HasType` requires it to have type `(0)` under the block-extended variable context and assigns the corresponding shifted profile.
 
-Stable closing will consume the M2.3 occurrence selections to perform this partial abstraction.
+M2.4 supplies stable full-name and block closing on varieties. A selection-aware wrapper still has to consume the M2.3 occurrence selections so that §3.2 can close exactly the indicated occurrences rather than all occurrences of a name.
 
 ## 9. Indicated occurrences
 
@@ -265,7 +268,7 @@ This representation has three useful properties:
 
 1. two occurrences of the same free name remain distinguishable;
 2. invalid indication data is rejected by an explicit validity predicate rather than contaminating raw syntax;
-3. the same selection mechanism can be consumed by §3.2 closing and later §5 indicated replacement.
+3. the same selection mechanism can be consumed by §3.2 selected closing and later §5 indicated replacement.
 
 The finite set is auxiliary metadata. It is not part of ordinary `Variety`, `Formula`, or `Functional` equality.
 
@@ -291,12 +294,12 @@ TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
+TakeutiGLC/Syntax/OpenClose.lean
 ```
 
 Expected next modules, with exact names still adjustable:
 
 ```text
-TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
@@ -317,4 +320,5 @@ The project currently treats the following as fixed unless later proof work supp
 8. terms as type-`(0)` varieties rather than a raw fourth category;
 9. indicated occurrences as finite auxiliary structural-path selections;
 10. quantifier non-vacuity represented by use of the newly introduced de Bruijn binder;
-11. bound renaming erased at the source-to-core boundary.
+11. cutoff-aware stable opening/closing with namespace independence;
+12. bound renaming erased at the source-to-core boundary.
