@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. The stable locally nameless syntax now has structural scope, extrinsic typing, occurrence analysis, §3.1 indication data, and the §§2.8–2.9 quantifier non-vacuity layer. Stable opening/closing and renaming are the next formalization targets.
+> **Project status:** Milestone 2 is underway. The stable locally nameless syntax now has structural scope, extrinsic typing, occurrence analysis, §3.1 indication data, §§2.8–2.9 quantifier non-vacuity, and stable opening/closing for both binder namespaces. Renaming and weakening are the next formalization targets.
 
 ## Source and scope
 
@@ -34,9 +34,11 @@ The stable syntax layer currently contains:
 - structural occurrence paths for free variables and free functions;
 - finite occurrence selections implementing the metasyntactic indication convention of §3.1;
 - full-indication predicates corresponding to §3.3;
-- binder-use predicates and non-vacuity side conditions for §§2.8–2.9.
+- binder-use predicates and non-vacuity side conditions for §§2.8–2.9;
+- stable cutoff-aware opening and closing for variables and functions;
+- simultaneous variable-block opening/closing with the first displayed binder at index `0`.
 
-Still to come in Milestone 2 are opening/closing in the stable namespace, renaming and weakening, and Takeuti's capture-avoiding variable and functional substitution machinery together with its composition and commutation laws.
+Still to come in Milestone 2 are renaming and weakening, selection-aware closing for §3.2 partial abstraction, and Takeuti's capture-avoiding variable and functional substitution machinery together with its composition and commutation laws.
 
 ## Architecture
 
@@ -47,6 +49,8 @@ Variable and function binders use separate de Bruijn namespaces. Historical boun
 Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies.
 
 Takeuti's indication notation is also kept extrinsic. `OccurrencePath` addresses a particular named occurrence without changing the raw expression, while finite variable/function selections record which occurrences are indicated. This lets §3.2 and later §5 operations distinguish selected from unselected occurrences of the same free name without adding an `indicated` syntax constructor.
+
+Opening and closing follow the same two-namespace discipline. Crossing a binder changes only the cutoff for that binder family; crossing a Takeuti abstraction block shifts the variable cutoff by the whole block size. The stable API also exposes block operations preserving the display-order convention fixed in Milestone 1.
 
 See [`docs/syntax-design.md`](docs/syntax-design.md) for the design record.
 

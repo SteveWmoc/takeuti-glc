@@ -5,6 +5,7 @@ import TakeutiGLC.Syntax.Core
 import TakeutiGLC.Syntax.Scope
 import TakeutiGLC.Syntax.Typing
 import TakeutiGLC.Syntax.Occurrence
+import TakeutiGLC.Syntax.OpenClose
 import TakeutiGLC.Experiment.Names
 import TakeutiGLC.Experiment.Binding.DeBruijn
 import TakeutiGLC.Experiment.Binding.DeBruijnOps

@@ -4,9 +4,9 @@
 
 This document records the **source-level** syntax conventions in §§1–3 of Gaisi Takeuti's 1953 paper *On a generalized logic calculus*. It is intended to remain readable independently of the Lean implementation.
 
-Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 adds structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`.
+Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 added structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`; M2.4 adds stable cutoff-aware opening/closing in `OpenClose.lean`.
 
-The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer now supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing will next connect those selections to the executable §3.2 and §5 transformations.
+The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable full-name opening/closing is now available in both binder namespaces; renaming/weakening and selection-aware closing for §3.2 are the next implementation steps.
 
 The primary source is included in this repository as [`Takeuti53.pdf`](../Takeuti53.pdf). The implementation design is recorded separately in [`syntax-design.md`](syntax-design.md).
 
@@ -306,10 +306,11 @@ The following questions were open when this specification was first drafted and 
 - functional bodies are required by `Functional.HasType` to be terms;
 - occurrence indication is represented by finite sets of structural paths external to raw syntax identity;
 - variable/function binder-use predicates express the non-vacuity requirements of §§2.8–2.9 on translated core bodies;
+- stable opening/closing uses cutoff-aware natural-number insertion/removal in independent variable/function namespaces, with abstraction blocks shifting the variable cutoff by their full size;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
 
-- the stable opening/closing and renaming APIs;
+- the stable renaming/weakening API;
 - executable closing of the indicated occurrences used by §3.2;
 - the full formal correspondence between Takeuti's later homology relation and equality of translated core objects.
