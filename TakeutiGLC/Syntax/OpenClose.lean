@@ -305,17 +305,18 @@ end Functional
     simp [insertIndex, removeIndex, h, hnotlt, hne]
 
 @[simp] theorem Variety.openVar_closeVar_freeVar (target : VariableName) :
-    (.freeVar target).closeVar target |>.openVar target = .freeVar target := by
+    ((Variety.freeVar target).closeVar target).openVar target = Variety.freeVar target := by
   simp [Variety.openVar, Variety.closeVar, Variety.openVarAt, Variety.closeVarAt,
     removeIndex]
 
 @[simp] theorem Variety.openVar_closeVar_boundVar (target : VariableName) (index : Nat) :
-    (.boundVar index).closeVar target |>.openVar target = .boundVar index := by
+    ((Variety.boundVar index).closeVar target).openVar target = Variety.boundVar index := by
   simp [Variety.openVar, Variety.closeVar, Variety.openVarAt, Variety.closeVarAt,
     removeIndex, insertIndex]
 
 @[simp] theorem Variety.openFun_closeFun_freeFunApp_nil (target : FunctionName) :
-    (.freeFunApp target []).closeFun target |>.openFun target = .freeFunApp target [] := by
+    ((Variety.freeFunApp target []).closeFun target).openFun target =
+      Variety.freeFunApp target [] := by
   simp [Variety.openFun, Variety.closeFun, Variety.openFunAt, Variety.closeFunAt,
     removeIndex]
 
