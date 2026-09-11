@@ -181,14 +181,6 @@ def weakenFun : Functional → Functional := weakenFunAt 0
 
 end Functional
 
-@[simp] theorem Variety.rename_boundVar (rename : Renaming) (index : Nat) :
-    (Variety.boundVar index).rename rename = .boundVar (rename.varMap index) := by
-  simp
-
-@[simp] theorem Variety.rename_boundFunApp_nil (rename : Renaming) (index : Nat) :
-    (Variety.boundFunApp index []).rename rename = .boundFunApp (rename.funMap index) [] := by
-  simp
-
 @[simp] theorem Variety.weakenVar_boundVar (index : Nat) :
     (Variety.boundVar index).weakenVar = .boundVar (index + 1) := by
   simp [Variety.weakenVar, Variety.weakenVarAt, Renaming.weakenVarAt, insertIndex]
