@@ -181,12 +181,4 @@ def weakenFun : Functional → Functional := weakenFunAt 0
 
 end Functional
 
-@[simp] theorem Variety.weakenVar_boundVar (index : Nat) :
-    (Variety.boundVar index).weakenVar = .boundVar (index + 1) := by
-  simp [Variety.weakenVar, Variety.weakenVarAt, Renaming.weakenVarAt, insertIndex]
-
-@[simp] theorem Variety.weakenFun_boundFunApp_nil (index : Nat) :
-    (Variety.boundFunApp index []).weakenFun = .boundFunApp (index + 1) [] := by
-  simp [Variety.weakenFun, Variety.weakenFunAt, Renaming.weakenFunAt, insertIndex]
-
 end TakeutiGLC
