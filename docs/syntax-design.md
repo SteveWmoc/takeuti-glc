@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.4 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, and opening/closing layers in
+M2.1–M2.5 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, and renaming/weakening layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -13,9 +13,10 @@ TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
+TakeutiGLC/Syntax/Renaming.lean
 ```
 
-The next implementation target is renaming and weakening. The occurrence layer already supplies the auxiliary selection data needed for §3.2 partial abstraction and later §5 substitution; selection-aware closing remains a small downstream extension of the stable full-name opening/closing API.
+The next major implementation target is capture-avoiding substitution. The occurrence layer already supplies the auxiliary selection data needed for §3.2 partial abstraction and later §5 substitution; selection-aware closing remains a small downstream extension of the stable full-name opening/closing API. The renaming layer now supplies binder-aware weakening for the substitution recursion.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -185,21 +186,34 @@ Vacuous abstraction slots are permitted, as required by §2.6.
 
 `Syntax/OpenClose.lean` realizes this convention with `insertIndex` and `removeIndex`, cutoff-aware variable/function operations on `Variety` and `Formula`, corresponding operations through `Functional`, and simultaneous variable-block operations. The two namespaces remain independent: variable binders shift only variable cutoffs, while function binders shift only function cutoffs. Crossing a Takeuti abstraction block shifts the variable cutoff by the entire block size.
 
-## 8. Source-to-core correspondence
+## 8. Stable renaming and weakening
 
-### 8.1 Variables of type `(0)` — §§2.1–2.2
+`Syntax/Renaming.lean` represents a bound-index renaming by two maps:
+
+```text
+varMap : Nat → Nat
+funMap : Nat → Nat
+```
+
+Free and special names are never changed by this operation. Crossing a variable quantifier lifts only `varMap`; crossing a function quantifier lifts only `funMap`; crossing a Takeuti abstraction block lifts `varMap` by the full block size. The same renaming recursion is defined for `Variety`, `Formula`, and `Functional`.
+
+Weakening is the special renaming obtained by inserting a fresh de Bruijn slot at a cutoff. Separate variable and function weakening operations preserve the independence of the two namespaces. Identity and composition are exposed at the renaming level so later §5 proofs can state functoriality and substitution-interaction laws without rebuilding index arithmetic.
+
+## 9. Source-to-core correspondence
+
+### 9.1 Variables of type `(0)` — §§2.1–2.2
 
 A free source variable of type `(0)` becomes `Variety.freeVar`; a special source variable becomes `Variety.specialVar`. Bound source names are not stored as named core occurrences.
 
-### 8.2 Atomic formulas — §§2.3–2.4
+### 9.2 Atomic formulas — §§2.3–2.4
 
 Free and special higher-type variable applications become `Formula.atomFree` and `Formula.atomSpecial`. A variable bound by an enclosing source binder becomes `Formula.atomBound`. `Formula.WellFormed` checks the head profile and argument types.
 
-### 8.3 Function application — §2.5
+### 9.3 Function application — §2.5
 
 Applications of free and special functions become `freeFunApp` and `specialFunApp`; bound functions become `boundFunApp`. `Variety.HasType` requires matching argument profiles and assigns every such application type `(0)`.
 
-### 8.4 Higher-type abstraction — §2.6
+### 9.4 Higher-type abstraction — §2.6
 
 For
 
@@ -211,25 +225,25 @@ the printed bound names exist only during source translation. The variable envir
 
 Section 2.6 replaces **every occurrence** of each selected free variable. A slot may nevertheless be vacuous if its selected variable does not occur in `A`.
 
-The core node stores predecessor levels and the translated body. `Variety.HasType` assigns the shifted result profile when the body is well formed under the block-extended context. `Formula.closeVarBlock` now provides the stable full-occurrence closing operation used by this translation pattern.
+The core node stores predecessor levels and the translated body. `Variety.HasType` assigns the shifted result profile when the body is well formed under the block-extended context. `Formula.closeVarBlock` provides the stable full-occurrence closing operation used by this translation pattern.
 
-### 8.5 Propositional connectives — §2.7
+### 9.5 Propositional connectives — §2.7
 
 `¬`, `∧`, and `∨` translate structurally to `neg`, `conj`, and `disj`.
 
-### 8.6 Variable quantification — §2.8
+### 9.6 Variable quantification — §2.8
 
 The binder profile is stored on the quantifier node and the source bound name disappears into the variable de Bruijn namespace. `Formula.WellFormed` checks the body under the extended typing context.
 
-M2.3 adds `Formula.UsesInnermostVariableBinder`: after closing, the source requirement that the quantified free variable actually occurred is represented by use of the newly introduced variable index `0`, with the expected cutoff shifts under nested variable binders and abstraction blocks. M2.4 now supplies the stable `Formula.closeVar` operation that performs that closing.
+M2.3 adds `Formula.UsesInnermostVariableBinder`: after closing, the source requirement that the quantified free variable actually occurred is represented by use of the newly introduced variable index `0`, with the expected cutoff shifts under nested variable binders and abstraction blocks. M2.4 supplies the stable `Formula.closeVar` operation that performs that closing.
 
-### 8.7 Function quantification — §2.9
+### 9.7 Function quantification — §2.9
 
 The binder profile is stored on the function quantifier and only the function namespace is extended. `Formula.UsesInnermostFunctionBinder` analogously records the source non-vacuity requirement, shifting only across nested function binders.
 
 `QuantifierSideConditions` propagates these requirements through nested syntax, and `WellFormedWithNonvacuousQuantifiers` combines them with the M2.2 typing layer. M2.4 supplies the corresponding stable `Formula.closeFun` operation.
 
-### 8.8 Functionals — §3.2
+### 9.8 Functionals — §3.2
 
 A functional
 
@@ -241,9 +255,9 @@ uses the same **block-index convention** as §2.6 but a different occurrence-sel
 
 The body translates as a `Variety`; `Functional.HasType` requires it to have type `(0)` under the block-extended variable context and assigns the corresponding shifted profile.
 
-M2.4 supplies stable full-name and block closing on varieties. A selection-aware wrapper still has to consume the M2.3 occurrence selections so that §3.2 can close exactly the indicated occurrences rather than all occurrences of a name.
+Stable full-name and block closing are available on varieties. A selection-aware wrapper still has to consume the M2.3 occurrence selections so that §3.2 can close exactly the indicated occurrences rather than all occurrences of a name.
 
-## 9. Indicated occurrences
+## 10. Indicated occurrences
 
 Indication is metasyntactic data, not a raw syntax constructor. M2.3 makes this architectural decision executable.
 
@@ -272,7 +286,7 @@ This representation has three useful properties:
 
 The finite set is auxiliary metadata. It is not part of ordinary `Variety`, `Formula`, or `Functional` equality.
 
-## 10. Homology and alpha-equivalence
+## 11. Homology and alpha-equivalence
 
 The core stores no bound source names. Consequently, well-formed source expressions that differ only by admissible renaming of bound variables or bound functions should translate to the same core object.
 
@@ -284,7 +298,7 @@ homologous source expressions  ->  equal core translations.
 
 The project should not introduce a quotient by alpha-equivalence into ordinary core syntax unless later source details force it.
 
-## 11. Current Milestone 2 module plan
+## 12. Current Milestone 2 module plan
 
 Implemented:
 
@@ -295,18 +309,18 @@ TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
+TakeutiGLC/Syntax/Renaming.lean
 ```
 
-Expected next modules, with exact names still adjustable:
+Expected next module, with exact internal decomposition still adjustable:
 
 ```text
-TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
-## 12. Design commitments
+## 13. Design commitments
 
 The project currently treats the following as fixed unless later proof work supplies a concrete reason to revisit them:
 
@@ -321,4 +335,5 @@ The project currently treats the following as fixed unless later proof work supp
 9. indicated occurrences as finite auxiliary structural-path selections;
 10. quantifier non-vacuity represented by use of the newly introduced de Bruijn binder;
 11. cutoff-aware stable opening/closing with namespace independence;
-12. bound renaming erased at the source-to-core boundary.
+12. bound-index renaming with binder-aware lifting and weakening;
+13. bound source-name renaming erased at the source-to-core boundary.
