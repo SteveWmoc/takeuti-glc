@@ -76,12 +76,6 @@ def weakenFunAt (cutoff : Nat) : Renaming :=
 @[simp] theorem liftIndexBy_succ (count : Nat) (rename : Nat → Nat) :
     liftIndexBy (Nat.succ count) rename = liftIndex (liftIndexBy count rename) := rfl
 
-@[simp] theorem identity_underVar : identity.underVar = identity := by
-  apply Renaming.ext <;> funext index <;> cases index <;> rfl
-
-@[simp] theorem identity_underFun : identity.underFun = identity := by
-  apply Renaming.ext <;> funext index <;> cases index <;> rfl
-
 end Renaming
 
 mutual
@@ -188,19 +182,19 @@ def weakenFun : Functional → Functional := weakenFunAt 0
 end Functional
 
 @[simp] theorem Variety.rename_boundVar (rename : Renaming) (index : Nat) :
-    (Variety.boundVar index).rename rename = .boundVar (rename.varMap index) := rfl
+    (Variety.boundVar index).rename rename = .boundVar (rename.varMap index) := by
+  simp
 
 @[simp] theorem Variety.rename_boundFunApp_nil (rename : Renaming) (index : Nat) :
-    (Variety.boundFunApp index []).rename rename = .boundFunApp (rename.funMap index) [] := rfl
+    (Variety.boundFunApp index []).rename rename = .boundFunApp (rename.funMap index) [] := by
+  simp
 
 @[simp] theorem Variety.weakenVar_boundVar (index : Nat) :
     (Variety.boundVar index).weakenVar = .boundVar (index + 1) := by
-  simp [Variety.weakenVar, Variety.weakenVarAt, Renaming.weakenVarAt,
-    Variety.rename, insertIndex]
+  simp [Variety.weakenVar, Variety.weakenVarAt, Renaming.weakenVarAt, insertIndex]
 
 @[simp] theorem Variety.weakenFun_boundFunApp_nil (index : Nat) :
     (Variety.boundFunApp index []).weakenFun = .boundFunApp (index + 1) [] := by
-  simp [Variety.weakenFun, Variety.weakenFunAt, Renaming.weakenFunAt,
-    Variety.rename, insertIndex]
+  simp [Variety.weakenFun, Variety.weakenFunAt, Renaming.weakenFunAt, insertIndex]
 
 end TakeutiGLC
