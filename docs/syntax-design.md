@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.5 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, and renaming/weakening layers in
+M2.1–M2.6 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, and selection-aware closing layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -14,9 +14,10 @@ TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
+TakeutiGLC/Syntax/SelectedClosing.lean
 ```
 
-The next major implementation target is capture-avoiding substitution. The occurrence layer already supplies the auxiliary selection data needed for §3.2 partial abstraction and later §5 substitution; selection-aware closing remains a small downstream extension of the stable full-name opening/closing API. The renaming layer now supplies binder-aware weakening for the substitution recursion.
+The next major implementation target is capture-avoiding substitution. The occurrence layer supplies the auxiliary selection data used by §3.2 partial abstraction and later §5 substitution; `SelectedClosing.lean` now consumes that data for path-sensitive abstraction, while the renaming layer supplies binder-aware weakening for the substitution recursion.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -255,11 +256,11 @@ uses the same **block-index convention** as §2.6 but a different occurrence-sel
 
 The body translates as a `Variety`; `Functional.HasType` requires it to have type `(0)` under the block-extended variable context and assigns the corresponding shifted profile.
 
-Stable full-name and block closing are available on varieties. A selection-aware wrapper still has to consume the M2.3 occurrence selections so that §3.2 can close exactly the indicated occurrences rather than all occurrences of a name.
+`Syntax/SelectedClosing.lean` consumes `VariableOccurrenceSelection` values and closes only the paths they select. The operation still inserts genuine de Bruijn slots, shifts older bound-variable indices, crosses nested binders with the established cutoff discipline, and offers simultaneous block closing in display order. Thus §3.2 partial abstraction is now represented without turning indication into raw syntax.
 
 ## 10. Indicated occurrences
 
-Indication is metasyntactic data, not a raw syntax constructor. M2.3 makes this architectural decision executable.
+Indication is metasyntactic data, not a raw syntax constructor. M2.3 makes this architectural decision executable, and M2.6 supplies its first path-sensitive consumer.
 
 `OccurrenceStep` records one structural navigation step and
 
@@ -282,7 +283,7 @@ This representation has three useful properties:
 
 1. two occurrences of the same free name remain distinguishable;
 2. invalid indication data is rejected by an explicit validity predicate rather than contaminating raw syntax;
-3. the same selection mechanism can be consumed by §3.2 selected closing and later §5 indicated replacement.
+3. the same selection mechanism is consumed by §3.2 selected closing and remains available for later §5 indicated replacement.
 
 The finite set is auxiliary metadata. It is not part of ordinary `Variety`, `Formula`, or `Functional` equality.
 
@@ -310,6 +311,7 @@ TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
+TakeutiGLC/Syntax/SelectedClosing.lean
 ```
 
 Expected next module, with exact internal decomposition still adjustable:
@@ -336,4 +338,5 @@ The project currently treats the following as fixed unless later proof work supp
 10. quantifier non-vacuity represented by use of the newly introduced de Bruijn binder;
 11. cutoff-aware stable opening/closing with namespace independence;
 12. bound-index renaming with binder-aware lifting and weakening;
-13. bound source-name renaming erased at the source-to-core boundary.
+13. selection-aware closing as the §3.2 consumer of variable-occurrence selections;
+14. bound source-name renaming erased at the source-to-core boundary.
