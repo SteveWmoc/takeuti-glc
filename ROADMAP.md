@@ -33,6 +33,7 @@ Active development is organized in milestones so that foundational representatio
 - [x] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
 - [x] Promote opening/closing operations to the stable syntax namespace.
 - [x] Define renaming and weakening for every syntactic category.
+- [x] Consume occurrence selections in path-sensitive closing for §3.2 partial abstraction.
 - [ ] Define capture-avoiding substitution of varieties for variables.
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.

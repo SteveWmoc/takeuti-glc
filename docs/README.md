@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.5 have implemented its name/core/scope/typing/occurrence/open-close/renaming layers. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.6 have implemented its name/core/scope/typing/occurrence/open-close/renaming/selected-closing layers. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -26,6 +26,7 @@ TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
+TakeutiGLC/Syntax/SelectedClosing.lean
 ```
 
 The stable core already fixes and implements the following choices:
@@ -45,9 +46,10 @@ The stable core already fixes and implements the following choices:
 - cutoff-aware opening and closing in both binder namespaces;
 - simultaneous variable-block opening/closing preserving display order;
 - bound-index renaming with independent variable/function maps;
-- binder-aware lifting and variable/function weakening for every stable syntactic category.
+- binder-aware lifting and variable/function weakening for every stable syntactic category;
+- path-sensitive closing that consumes §3.1 selections and binds exactly the indicated variable occurrences for §3.2.
 
-The next major implementation layer is Takeuti's §5 substitution machinery. Selection-aware closing for §3.2 partial abstraction remains a small follow-up that will consume the existing occurrence selections, and the renaming layer supplies the weakening needed to cross binders capture-avoidantly.
+The next major implementation layer is Takeuti's §5 substitution machinery. The selection-aware closing layer now completes the §3.2 partial-abstraction bridge, and the renaming layer supplies the weakening needed to cross binders capture-avoidantly.
 
 ## Reading order
 
