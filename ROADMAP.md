@@ -34,7 +34,8 @@ Active development is organized in milestones so that foundational representatio
 - [x] Promote opening/closing operations to the stable syntax namespace.
 - [x] Define renaming and weakening for every syntactic category.
 - [x] Consume occurrence selections in path-sensitive closing for §3.2 partial abstraction.
-- [ ] Define capture-avoiding substitution of varieties for variables.
+- [x] Define the height-zero case of capture-avoiding variable substitution (§5.2.1–§5.2.13).
+- [ ] Extend complete variable substitution to higher types (§5.2.14–§5.2.35).
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.
 
@@ -88,4 +89,4 @@ These checks apply across milestones rather than constituting a separate mathema
 - [x] Treat Lean warnings as CI failures.
 - [x] Check trailing whitespace and tabs in Lean source.
 - [x] Check that Lean, mathlib, and the dependency manifest remain release-aligned.
-- [ ] Add theorem-level regression tests as the stable metatheory grows.
+- [x] Add theorem-level regression tests as the stable metatheory grows.
