@@ -4,9 +4,9 @@
 
 This document records the **source-level** syntax conventions in §§1–3 of Gaisi Takeuti's 1953 paper *On a generalized logic calculus*. It is intended to remain readable independently of the Lean implementation.
 
-Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 added structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`; M2.4 added stable cutoff-aware opening/closing in `OpenClose.lean`; M2.5 added binder-aware bound-index renaming and weakening in `Renaming.lean`; M2.6 adds selection-aware closing for §3.2 in `SelectedClosing.lean`.
+Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 added structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`; M2.4 added stable cutoff-aware opening/closing in `OpenClose.lean`; M2.5 added binder-aware bound-index renaming and weakening in `Renaming.lean`; M2.6 added selection-aware closing for §3.2 in `SelectedClosing.lean`; M2.7 begins §5 by implementing the height-zero case of complete variable substitution in `Substitution.lean`.
 
-The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing, renaming/weakening, and path-sensitive closing of indicated variable occurrences are now available; capture-avoiding substitution is the next major implementation step.
+The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing, renaming/weakening, path-sensitive closing of indicated variable occurrences, and capture-avoiding substitution of a term for a free variable of type `(0)` are now available. The higher-type inductive step of §5.2 remains the next substitution target.
 
 The primary source is included in this repository as [`Takeuti53.pdf`](../Takeuti53.pdf). The implementation design is recorded separately in [`syntax-design.md`](syntax-design.md).
 
@@ -311,9 +311,10 @@ The following questions were open when this specification was first drafted and 
 - stable opening/closing uses cutoff-aware natural-number insertion/removal in independent variable/function namespaces, with abstraction blocks shifting the variable cutoff by their full size;
 - stable bound-index renaming carries independent variable/function maps and lifts only the namespace crossed by a binder; weakening is implemented by fresh-slot insertion at a cutoff;
 - selected closing consumes `VariableOccurrenceSelection` path data and closes exactly the indicated variable occurrences for §3.2 while leaving other occurrences free;
+- height-zero complete variable substitution follows §5.2's base case and uses binder-aware weakening in place of source-level fresh-bound-name choices;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
 
-- capture-avoiding variable and functional substitution together with their interaction laws;
+- the higher-type inductive step of complete variable substitution, functional substitution, and their interaction laws;
 - the full formal correspondence between Takeuti's later homology relation and equality of translated core objects.
