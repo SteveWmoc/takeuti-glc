@@ -1,4 +1,4 @@
-import TakeutiGLC.Syntax.SelectedClosing
+import TakeutiGLC.Syntax.Renaming
 
 /-!
 # Height-zero variable substitution
