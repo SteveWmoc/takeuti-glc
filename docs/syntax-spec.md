@@ -311,7 +311,7 @@ The following questions were open when this specification was first drafted and 
 - stable opening/closing uses cutoff-aware natural-number insertion/removal in independent variable/function namespaces, with abstraction blocks shifting the variable cutoff by their full size;
 - stable bound-index renaming carries independent variable/function maps and lifts only the namespace crossed by a binder; weakening is implemented by fresh-slot insertion at a cutoff;
 - selected closing consumes `VariableOccurrenceSelection` path data and closes exactly the indicated variable occurrences for §3.2 while leaving other occurrences free;
-- height-zero complete variable substitution follows §5.2's base case and uses binder-aware weakening in place of source-level fresh-bound-name choices;
+- height-zero complete variable substitution follows §5.2's base case, replaces every target occurrence, and uses binder-aware weakening in place of source-level fresh-bound-name choices; substitution at only indicated places belongs to the later §5.6 layer;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
