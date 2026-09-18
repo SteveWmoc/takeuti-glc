@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.6 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, and selection-aware closing layers in
+M2.1–M2.7 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, and height-zero substitution layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -15,9 +15,10 @@ TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
+TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next major implementation target is capture-avoiding substitution. The occurrence layer supplies the auxiliary selection data used by §3.2 partial abstraction and later §5 substitution; `SelectedClosing.lean` now consumes that data for path-sensitive abstraction, while the renaming layer supplies binder-aware weakening for the substitution recursion.
+`Substitution.lean` now implements the height-zero case of Takeuti's complete variable substitution (§5.2.1–§5.2.13). The next target is the higher-type inductive step (§5.2.14–§5.2.35), where an occurrence of a higher-type free variable is applied to argument varieties and substitution must reduce through the replacement abstraction.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -200,6 +201,16 @@ Free and special names are never changed by this operation. Crossing a variable 
 
 Weakening is the special renaming obtained by inserting a fresh de Bruijn slot at a cutoff. Separate variable and function weakening operations preserve the independence of the two namespaces. Identity and composition are exposed at the renaming level so later §5 proofs can state functoriality and substitution-interaction laws without rebuilding index arithmetic.
 
+### 8.1 Height-zero complete variable substitution
+
+Takeuti defines complete variable substitution in §5.2 by induction on the height of the substituted variable. The base case has a free variable of type `(0)` and a replacement term. `Syntax/Substitution.lean` implements this height-zero transformation on `Variety`, `Formula`, and `Functional`.
+
+At a matching `freeVar`, the replacement is inserted directly and is not recursively substituted into itself, corresponding to §5.2.3. Special and bound variable occurrences are left untouched, while function applications and logical constructors recurse structurally. When the recursion crosses a variable quantifier, the replacement is weakened in the variable namespace; when it crosses a function quantifier, it is weakened in the function namespace; and when it enters a Takeuti abstraction block, it is weakened by the whole variable-block size.
+
+This locally nameless weakening replaces the fresh-bound-name bookkeeping in Takeuti's clauses 5.2.5 and 5.2.8. The raw API does not itself assert the semantic preconditions `target.profile = (0)` and `replacement` is a term; those belong to the typing-preservation metatheory.
+
+The higher-type clauses 5.2.14–5.2.35 are not yet implemented. In particular, clause 5.2.26 requires the higher-type replacement abstraction to be instantiated with recursively substituted arguments of lower height, so it is intentionally separated from the structurally simpler height-zero kernel.
+
 ## 9. Source-to-core correspondence
 
 ### 9.1 Variables of type `(0)` — §§2.1–2.2
@@ -312,13 +323,10 @@ TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
-```
-
-Expected next module, with exact internal decomposition still adjustable:
-
-```text
 TakeutiGLC/Syntax/Substitution.lean
 ```
+
+The next extension remains in `Substitution.lean`: implement the higher-type inductive step of complete variable substitution before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
@@ -339,4 +347,5 @@ The project currently treats the following as fixed unless later proof work supp
 11. cutoff-aware stable opening/closing with namespace independence;
 12. bound-index renaming with binder-aware lifting and weakening;
 13. selection-aware closing as the §3.2 consumer of variable-occurrence selections;
-14. bound source-name renaming erased at the source-to-core boundary.
+14. height-zero complete variable substitution represented by structural recursion plus namespace-specific weakening under binders;
+15. bound source-name renaming erased at the source-to-core boundary.
