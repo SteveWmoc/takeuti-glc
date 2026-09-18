@@ -8,6 +8,7 @@ import TakeutiGLC.Syntax.Occurrence
 import TakeutiGLC.Syntax.OpenClose
 import TakeutiGLC.Syntax.Renaming
 import TakeutiGLC.Syntax.SelectedClosing
+import TakeutiGLC.Syntax.Substitution
 import TakeutiGLC.Experiment.Names
 import TakeutiGLC.Experiment.Binding.DeBruijn
 import TakeutiGLC.Experiment.Binding.DeBruijnOps

@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. The stable locally nameless syntax now has structural scope, extrinsic typing, occurrence analysis, §3.1 indication data, §§2.8–2.9 quantifier non-vacuity, stable opening/closing, bound-index renaming/weakening, and selection-aware closing for §3.2 partial abstraction. Capture-avoiding substitution is the next major target.
+> **Project status:** Milestone 2 is underway. The stable locally nameless syntax now reaches into Takeuti §5: in addition to scope, typing, occurrence selection, opening/closing, renaming/weakening, and §3.2 selected closing, the height-zero case of complete variable substitution is implemented capture-avoidantly.
 
 ## Source and scope
 
@@ -39,9 +39,10 @@ The stable syntax layer currently contains:
 - simultaneous variable-block opening/closing with the first displayed binder at index `0`;
 - bound-index renamings with independent variable/function maps and binder-aware lifting;
 - variable and function weakening for varieties, formulas, and functionals;
-- path-sensitive closing of exactly the indicated free-variable occurrences, including simultaneous §3.2-style blocks.
+- path-sensitive closing of exactly the indicated free-variable occurrences, including simultaneous §3.2-style blocks;
+- capture-avoiding substitution of terms for free variables of type `(0)`, including weakening across both binder namespaces and abstraction blocks.
 
-Still to come in Milestone 2 are capture-avoiding substitution of varieties for variables and functionals for functions, plus the identity/composition/commutation laws corresponding to §5.
+Still to come in Milestone 2 are the higher-type inductive step of Takeuti's complete variable substitution, substitution of functionals for functions, and the identity/composition/commutation laws corresponding to §5.
 
 ## Architecture
 
@@ -53,7 +54,7 @@ Typing is likewise extrinsic. `TypingContext` carries independent lists of varia
 
 Takeuti's indication notation is also kept extrinsic. `OccurrencePath` addresses a particular named occurrence without changing the raw expression, while finite variable/function selections record which occurrences are indicated. `SelectedClosing.lean` consumes those selections to bind exactly the indicated variable occurrences for §3.2 while leaving unindicated occurrences of the same name free.
 
-Opening, closing, selected closing, renaming, and weakening all follow the same two-namespace discipline. Crossing a binder changes only the transformation for that binder family; crossing a Takeuti abstraction block lifts the variable transformation by the whole block size. Free and special names are untouched by bound-index renaming.
+Opening, closing, selected closing, renaming, weakening, and height-zero substitution all follow the same two-namespace discipline. When a replacement crosses a variable binder it is weakened only in the variable namespace; crossing a function binder weakens only the function namespace; crossing a Takeuti abstraction block weakens by the full variable-block size.
 
 See [`docs/syntax-design.md`](docs/syntax-design.md) for the design record.
 
