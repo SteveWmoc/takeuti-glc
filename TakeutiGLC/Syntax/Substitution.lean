@@ -141,11 +141,13 @@ namespace Variety
 
 @[simp] theorem substituteBaseVar_special
     (target name : VariableName) (replacement : Variety) :
-    Variety.substituteBaseVar target replacement (Variety.specialVar name) = .specialVar name := rfl
+    Variety.substituteBaseVar target replacement (Variety.specialVar name) = .specialVar name := by
+  simp [Variety.substituteBaseVar]
 
 @[simp] theorem substituteBaseVar_bound
     (target : VariableName) (replacement : Variety) (index : Nat) :
-    Variety.substituteBaseVar target replacement (Variety.boundVar index) = .boundVar index := rfl
+    Variety.substituteBaseVar target replacement (Variety.boundVar index) = .boundVar index := by
+  simp [Variety.substituteBaseVar]
 
 end Variety
 
@@ -155,13 +157,15 @@ namespace Formula
     (target : VariableName) (replacement : Variety)
     (profile : TypeProfile) (body : Formula) :
     (Formula.allVar profile body).substituteBaseVar target replacement =
-      .allVar profile (body.substituteBaseVar target replacement.weakenVar) := rfl
+      .allVar profile (body.substituteBaseVar target replacement.weakenVar) := by
+  simp [Formula.substituteBaseVar]
 
 @[simp] theorem substituteBaseVar_allFun
     (target : VariableName) (replacement : Variety)
     (profile : FunctionProfile) (body : Formula) :
     (Formula.allFun profile body).substituteBaseVar target replacement =
-      .allFun profile (body.substituteBaseVar target replacement.weakenFun) := rfl
+      .allFun profile (body.substituteBaseVar target replacement.weakenFun) := by
+  simp [Formula.substituteBaseVar]
 
 end Formula
 
@@ -173,7 +177,8 @@ namespace Functional
     (Functional.abstract headLevel tailLevels body).substituteBaseVar target replacement =
       .abstract headLevel tailLevels
         (Variety.substituteBaseVar target
-          (replacement.weakenVarBy (blockSize tailLevels)) body) := rfl
+          (replacement.weakenVarBy (blockSize tailLevels)) body) := by
+  simp [Functional.substituteBaseVar]
 
 end Functional
 
