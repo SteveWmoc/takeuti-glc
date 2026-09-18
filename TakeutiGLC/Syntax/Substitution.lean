@@ -122,8 +122,8 @@ def substituteBaseVar
     (target : VariableName) (replacement : Variety) : Functional → Functional
   | .abstract headLevel tailLevels body =>
       .abstract headLevel tailLevels
-        (body.substituteBaseVar target
-          (replacement.weakenVarBy (blockSize tailLevels)))
+        (Variety.substituteBaseVar target
+          (replacement.weakenVarBy (blockSize tailLevels)) body)
 
 end Functional
 
@@ -131,21 +131,21 @@ namespace Variety
 
 @[simp] theorem substituteBaseVar_self
     (target : VariableName) (replacement : Variety) :
-    (Variety.freeVar target).substituteBaseVar target replacement = replacement := by
+    Variety.substituteBaseVar target replacement (Variety.freeVar target) = replacement := by
   simp [Variety.substituteBaseVar]
 
 @[simp] theorem substituteBaseVar_other
     (target name : VariableName) (replacement : Variety) (h : name ≠ target) :
-    (Variety.freeVar name).substituteBaseVar target replacement = .freeVar name := by
+    Variety.substituteBaseVar target replacement (Variety.freeVar name) = .freeVar name := by
   simp [Variety.substituteBaseVar, h]
 
 @[simp] theorem substituteBaseVar_special
     (target name : VariableName) (replacement : Variety) :
-    (Variety.specialVar name).substituteBaseVar target replacement = .specialVar name := rfl
+    Variety.substituteBaseVar target replacement (Variety.specialVar name) = .specialVar name := rfl
 
 @[simp] theorem substituteBaseVar_bound
     (target : VariableName) (replacement : Variety) (index : Nat) :
-    (Variety.boundVar index).substituteBaseVar target replacement = .boundVar index := rfl
+    Variety.substituteBaseVar target replacement (Variety.boundVar index) = .boundVar index := rfl
 
 end Variety
 
@@ -172,8 +172,8 @@ namespace Functional
     (headLevel : Nat) (tailLevels : List Nat) (body : Variety) :
     (Functional.abstract headLevel tailLevels body).substituteBaseVar target replacement =
       .abstract headLevel tailLevels
-        (body.substituteBaseVar target
-          (replacement.weakenVarBy (blockSize tailLevels))) := rfl
+        (Variety.substituteBaseVar target
+          (replacement.weakenVarBy (blockSize tailLevels)) body) := rfl
 
 end Functional
 
