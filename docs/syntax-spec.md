@@ -4,9 +4,9 @@
 
 This document records the **source-level** syntax conventions in §§1–3 of Gaisi Takeuti's 1953 paper *On a generalized logic calculus*. It is intended to remain readable independently of the Lean implementation.
 
-Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 added structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`; M2.4 added stable cutoff-aware opening/closing in `OpenClose.lean`; M2.5 added binder-aware bound-index renaming and weakening in `Renaming.lean`; M2.6 added selection-aware closing for §3.2 in `SelectedClosing.lean`; M2.7 begins §5 by implementing the height-zero case of complete variable substitution in `Substitution.lean`.
+Milestone 1 completed the source transcription and selected a locally nameless internal representation. M2.1 implemented the stable name, raw-syntax, and structural-scope layers in `TakeutiGLC/Syntax/Name.lean`, `Core.lean`, and `Scope.lean`; M2.2 added the independent variable/function typing contexts and extrinsic type-formation judgments in `Typing.lean`; M2.3 added structural occurrence addresses, §3.1 indication selections, and the §§2.8–2.9 quantifier non-vacuity layer in `Occurrence.lean`; M2.4 added stable cutoff-aware opening/closing in `OpenClose.lean`; M2.5 added binder-aware bound-index renaming and weakening in `Renaming.lean`; M2.6 added selection-aware closing for §3.2 in `SelectedClosing.lean`; M2.7 began §5 with the height-zero case of complete variable substitution; M2.8 adds base-variable block instantiation in `Instantiation.lean` and the height-one case in `Substitution.lean`.
 
-The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing, renaming/weakening, path-sensitive closing of indicated variable occurrences, and capture-avoiding substitution of a term for a free variable of type `(0)` are now available. The higher-type inductive step of §5.2 remains the next substitution target.
+The typing relation enforces profile compatibility and the type-formational content of §§2–3. The occurrence layer supplies the additional core-side test that a newly introduced variable or function quantifier actually binds an occurrence, and represents partial indication as auxiliary metasyntactic data rather than raw syntax. Stable opening/closing, renaming/weakening, path-sensitive closing of indicated variable occurrences, and complete variable substitution at heights zero and one are now available. Arbitrary-height complete substitution remains the next §5.2 target.
 
 The primary source is included in this repository as [`Takeuti53.pdf`](../Takeuti53.pdf). The implementation design is recorded separately in [`syntax-design.md`](syntax-design.md).
 
@@ -312,9 +312,10 @@ The following questions were open when this specification was first drafted and 
 - stable bound-index renaming carries independent variable/function maps and lifts only the namespace crossed by a binder; weakening is implemented by fresh-slot insertion at a cutoff;
 - selected closing consumes `VariableOccurrenceSelection` path data and closes exactly the indicated variable occurrences for §3.2 while leaving other occurrences free;
 - height-zero complete variable substitution follows §5.2's base case, replaces every target occurrence, and uses binder-aware weakening in place of source-level fresh-bound-name choices; substitution at only indicated places belongs to the later §5.6 layer;
+- height-one substitution implements the first higher-type case of §5.2.26 by instantiating a replacement abstraction whose formal variables all have type `(0)`;
 - bound source names do not survive in the core, so admissible bound renaming is intended to disappear under source-to-core translation.
 
 Still open at the current Milestone 2 boundary are:
 
-- the higher-type inductive step of complete variable substitution, functional substitution, and their interaction laws;
+- complete variable substitution at arbitrary height, functional substitution, and their interaction laws;
 - the full formal correspondence between Takeuti's later homology relation and equality of translated core objects.
