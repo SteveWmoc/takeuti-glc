@@ -290,7 +290,10 @@ theorem completeSubstituteHeightOneVar_beta
     Formula.completeSubstituteHeightOneVar? target replacement
       (.atomFree target [argument]) =
         some (.atomSpecial predicate [argument]) := by
-  rfl
+  simp [Formula.completeSubstituteHeightOneVar?, completeSubstituteHeightOneVarArgs?,
+    Formula.instantiateBaseVarBlock?, Formula.instantiateBaseVarBlockAt?,
+    instantiateBaseVarBlockArgsAt?, Variety.instantiateBaseVarBlockAt?,
+    Variety.liftIntoScope, abstractionProfile, blockSize]
 
 end Formula
 
