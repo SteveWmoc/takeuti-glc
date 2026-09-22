@@ -283,17 +283,17 @@ A type-`(1)` variable replaced by the abstraction `{x} P[x]` reduces
 `α[t]` to `P[t]`.
 -/
 theorem completeSubstituteHeightOneVar_beta
-    (predicate : VariableName) (argument : Variety) :
+    (predicate argumentName : VariableName) :
     let target : VariableName := ⟨.higher 0 [], 0⟩
     let replacement : Variety :=
       .abstract 0 [] (.atomSpecial predicate [.boundVar 0])
     Formula.completeSubstituteHeightOneVar? target replacement
-      (.atomFree target [argument]) =
-        some (.atomSpecial predicate [argument]) := by
+      (.atomFree target [.specialVar argumentName]) =
+        some (.atomSpecial predicate [.specialVar argumentName]) := by
   simp [Formula.completeSubstituteHeightOneVar?, completeSubstituteHeightOneVarArgs?,
-    Formula.instantiateBaseVarBlock?, Formula.instantiateBaseVarBlockAt?,
-    instantiateBaseVarBlockArgsAt?, Variety.instantiateBaseVarBlockAt?,
-    Variety.liftIntoScope, abstractionProfile, blockSize]
+    Variety.completeSubstituteHeightOneVar?, Formula.instantiateBaseVarBlock?,
+    Formula.instantiateBaseVarBlockAt?, instantiateBaseVarBlockArgsAt?,
+    Variety.instantiateBaseVarBlockAt?, Variety.liftIntoScope, abstractionProfile, blockSize]
 
 end Formula
 
