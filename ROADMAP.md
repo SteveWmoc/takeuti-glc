@@ -35,7 +35,8 @@ Active development is organized in milestones so that foundational representatio
 - [x] Define renaming and weakening for every syntactic category.
 - [x] Consume occurrence selections in path-sensitive closing for §3.2 partial abstraction.
 - [x] Define the height-zero case of capture-avoiding variable substitution (§5.2.1–§5.2.13).
-- [ ] Extend complete variable substitution to higher types (§5.2.14–§5.2.35).
+- [x] Implement the height-one case of complete variable substitution, including base-block instantiation.
+- [ ] Extend complete variable substitution to arbitrary higher types (§5.2.14–§5.2.35).
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.
 
