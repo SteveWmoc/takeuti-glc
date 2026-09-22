@@ -1,7 +1,7 @@
-import TakeutiGLC.Syntax.Renaming
+import TakeutiGLC.Syntax.Instantiation
 
 /-!
-# Height-zero variable substitution
+# Complete variable substitution
 
 Takeuti begins the complete-substitution construction in §5.2 with variables
 of height zero. In that case the substituted variable is a free variable of
@@ -25,35 +25,17 @@ source-faithful use has
 * the replacement well typed as a term.
 
 Typing and scope preservation are separate metatheorems.
+
+M2.8 also implements the first genuinely higher-type induction stage: targets
+of height one. Such a target has profile `(1, ..., 1)`, so its replacement is
+an abstraction over base-type variables. A target atomic occurrence is reduced
+by recursively transforming its arguments and instantiating the replacement
+abstraction with those arguments. The raw height-one operation returns
+`Option` so malformed raw syntax or a mismatched replacement is rejected
+instead of silently producing a figure that has no source-level meaning.
 -/
 
 namespace TakeutiGLC
-
-namespace Variety
-
-/-- Weaken a variety by `count` fresh outer variable binders. -/
-def weakenVarBy : Nat → Variety → Variety
-  | 0, variety => variety
-  | Nat.succ count, variety => weakenVarBy count variety.weakenVar
-
-/-- Weaken a variety by `count` fresh outer function binders. -/
-def weakenFunBy : Nat → Variety → Variety
-  | 0, variety => variety
-  | Nat.succ count, variety => weakenFunBy count variety.weakenFun
-
-@[simp] theorem weakenVarBy_zero (variety : Variety) :
-    variety.weakenVarBy 0 = variety := rfl
-
-@[simp] theorem weakenVarBy_succ (count : Nat) (variety : Variety) :
-    variety.weakenVarBy (Nat.succ count) = (variety.weakenVar).weakenVarBy count := rfl
-
-@[simp] theorem weakenFunBy_zero (variety : Variety) :
-    variety.weakenFunBy 0 = variety := rfl
-
-@[simp] theorem weakenFunBy_succ (count : Nat) (variety : Variety) :
-    variety.weakenFunBy (Nat.succ count) = (variety.weakenFun).weakenFunBy count := rfl
-
-end Variety
 
 mutual
 
@@ -186,5 +168,131 @@ namespace Functional
   simp [Functional.completeSubstituteBaseVar]
 
 end Functional
+
+mutual
+
+/--
+Capture-avoiding complete substitution for a free variable of height one.
+
+The source-faithful case has `target.profile.height = 1` and a replacement
+abstraction of the same profile. Matching atomic occurrences are beta-reduced
+by instantiating the replacement's base-variable block with recursively
+transformed arguments.
+-/
+def Variety.completeSubstituteHeightOneVar?
+    (target : VariableName) (replacement : Variety) : Variety → Option Variety
+  | .freeVar name =>
+      if name = target then none else some (.freeVar name)
+  | .specialVar name => some (.specialVar name)
+  | .boundVar index => some (.boundVar index)
+  | .freeFunApp name args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (.freeFunApp name args')
+  | .specialFunApp name args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (.specialFunApp name args')
+  | .boundFunApp index args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (.boundFunApp index args')
+  | .abstract headLevel tailLevels body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target
+        (replacement.weakenVarBy (blockSize tailLevels)) body
+      some (.abstract headLevel tailLevels body')
+
+/-- Capture-avoiding height-one complete substitution in a formula. -/
+def Formula.completeSubstituteHeightOneVar?
+    (target : VariableName) (replacement : Variety) : Formula → Option Formula
+  | .atomFree name args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      if name = target then
+        match replacement with
+        | .abstract headLevel tailLevels replacementBody =>
+            if target.profile.height = 1 then
+              if abstractionProfile headLevel tailLevels = target.profile then
+                if args'.length = blockSize tailLevels then
+                  Formula.instantiateBaseVarBlock? args' replacementBody
+                else
+                  none
+              else
+                none
+            else
+              none
+        | _ => none
+      else
+        some (.atomFree name args')
+  | .atomSpecial name args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (.atomSpecial name args')
+  | .atomBound index args => do
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (.atomBound index args')
+  | .neg body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target replacement body
+      some (.neg body')
+  | .conj left right => do
+      let left' ← Formula.completeSubstituteHeightOneVar? target replacement left
+      let right' ← Formula.completeSubstituteHeightOneVar? target replacement right
+      some (.conj left' right')
+  | .disj left right => do
+      let left' ← Formula.completeSubstituteHeightOneVar? target replacement left
+      let right' ← Formula.completeSubstituteHeightOneVar? target replacement right
+      some (.disj left' right')
+  | .allVar profile body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target replacement.weakenVar body
+      some (.allVar profile body')
+  | .existsVar profile body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target replacement.weakenVar body
+      some (.existsVar profile body')
+  | .allFun profile body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target replacement.weakenFun body
+      some (.allFun profile body')
+  | .existsFun profile body => do
+      let body' ← Formula.completeSubstituteHeightOneVar? target replacement.weakenFun body
+      some (.existsFun profile body')
+
+/-- Height-one complete substitution recursively through a variety argument list. -/
+def completeSubstituteHeightOneVarArgs?
+    (target : VariableName) (replacement : Variety) :
+    List Variety → Option (List Variety)
+  | [] => some []
+  | arg :: args => do
+      let arg' ← Variety.completeSubstituteHeightOneVar? target replacement arg
+      let args' ← completeSubstituteHeightOneVarArgs? target replacement args
+      some (arg' :: args')
+
+end
+
+namespace Functional
+
+/-- Capture-avoiding height-one complete substitution through a functional. -/
+def completeSubstituteHeightOneVar?
+    (target : VariableName) (replacement : Variety) : Functional → Option Functional
+  | .abstract headLevel tailLevels body => do
+      let body' ← Variety.completeSubstituteHeightOneVar? target
+        (replacement.weakenVarBy (blockSize tailLevels)) body
+      some (.abstract headLevel tailLevels body')
+
+end Functional
+
+namespace Formula
+
+/--
+Regression test for the first higher-type beta-reduction case.
+
+A type-`(1)` variable replaced by the abstraction `{x} P[x]` reduces
+`α[t]` to `P[t]`.
+-/
+theorem completeSubstituteHeightOneVar_beta
+    (predicate : VariableName) (argument : Variety) :
+    let target : VariableName := ⟨.higher 0 [], 0⟩
+    let replacement : Variety :=
+      .abstract 0 [] (.atomSpecial predicate [.boundVar 0])
+    Formula.completeSubstituteHeightOneVar? target replacement
+      (.atomFree target [argument]) =
+        some (.atomSpecial predicate [argument]) := by
+  rfl
+
+end Formula
+
 
 end TakeutiGLC
