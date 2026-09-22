@@ -143,6 +143,28 @@ def weakenVar : Variety → Variety := weakenVarAt 0
 /-- Insert a fresh outermost function slot. -/
 def weakenFun : Variety → Variety := weakenFunAt 0
 
+/-- Insert `count` fresh outermost variable slots. -/
+def weakenVarBy : Nat → Variety → Variety
+  | 0, variety => variety
+  | Nat.succ count, variety => weakenVarBy count variety.weakenVar
+
+/-- Insert `count` fresh outermost function slots. -/
+def weakenFunBy : Nat → Variety → Variety
+  | 0, variety => variety
+  | Nat.succ count, variety => weakenFunBy count variety.weakenFun
+
+@[simp] theorem weakenVarBy_zero (variety : Variety) :
+    variety.weakenVarBy 0 = variety := rfl
+
+@[simp] theorem weakenVarBy_succ (count : Nat) (variety : Variety) :
+    variety.weakenVarBy (Nat.succ count) = (variety.weakenVar).weakenVarBy count := rfl
+
+@[simp] theorem weakenFunBy_zero (variety : Variety) :
+    variety.weakenFunBy 0 = variety := rfl
+
+@[simp] theorem weakenFunBy_succ (count : Nat) (variety : Variety) :
+    variety.weakenFunBy (Nat.succ count) = (variety.weakenFun).weakenFunBy count := rfl
+
 end Variety
 
 namespace Formula
