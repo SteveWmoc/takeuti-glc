@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.7 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, and height-zero substitution layers in
+M2.1–M2.8 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, base-block instantiation, and the first two substitution-height layers in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -15,10 +15,11 @@ TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
+TakeutiGLC/Syntax/Instantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-`Substitution.lean` now implements the height-zero case of Takeuti's complete variable substitution (§5.2.1–§5.2.13). The next target is the higher-type inductive step (§5.2.14–§5.2.35), where an occurrence of a higher-type free variable is applied to argument varieties and substitution must reduce through the replacement abstraction.
+`Substitution.lean` implements the height-zero case of Takeuti's complete variable substitution and the first higher-type stage, height one. `Instantiation.lean` supplies the base-variable block reduction needed to realize clause 5.2.26 in that case. The next target is arbitrary finite height, where formal variables in the replacement abstraction may themselves be higher-type atomic heads.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -209,7 +210,13 @@ At a matching `freeVar`, the replacement is inserted directly and is not recursi
 
 This locally nameless weakening replaces the fresh-bound-name bookkeeping in Takeuti's clauses 5.2.5 and 5.2.8. The raw API does not itself assert the semantic preconditions `target.profile = (0)` and `replacement` is a term; those belong to the typing-preservation metatheory.
 
-The higher-type clauses 5.2.14–5.2.35 are not yet implemented. In particular, clause 5.2.26 requires the higher-type replacement abstraction to be instantiated with recursively substituted arguments of lower height, so it is intentionally separated from the structurally simpler height-zero kernel.
+### 8.2 Height-one complete variable substitution
+
+For a target of height one, every argument level is zero. Thus a replacement abstraction binds only base-type variables. `Syntax/Instantiation.lean` implements simultaneous instantiation of exactly such a block: selected bound slots are replaced by actual varieties, older de Bruijn indices are contracted, and inserted arguments are weakened across any nested variable or function binders.
+
+`Formula.completeSubstituteHeightOneVar?` then implements the first higher-type instance of Takeuti's clause 5.2.26. It recursively transforms the arguments of a matching target atom, checks that the replacement is an abstraction of the same height-one profile and arity, and instantiates the replacement body with those transformed arguments. The transformation returns `Option` because raw syntax is extrinsically typed; malformed uses of a base-type block as atomic heads or profile/arity mismatches are rejected explicitly.
+
+The arbitrary-height clauses of §5.2 remain open. At height two and above, formal variables of the replacement abstraction can themselves occur as higher-type atomic heads, so block instantiation must recursively invoke lower-height substitution rather than only replace base-variable occurrences.
 
 ## 9. Source-to-core correspondence
 
@@ -323,10 +330,11 @@ TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
+TakeutiGLC/Syntax/Instantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next extension remains in `Substitution.lean`: implement the higher-type inductive step of complete variable substitution before adding functional substitution.
+The next extension generalizes the instantiation/substitution recursion from height one to arbitrary finite height before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
@@ -348,4 +356,6 @@ The project currently treats the following as fixed unless later proof work supp
 12. bound-index renaming with binder-aware lifting and weakening;
 13. selection-aware closing as the §3.2 consumer of variable-occurrence selections;
 14. height-zero complete variable substitution represented by structural recursion plus namespace-specific weakening under binders;
-15. bound source-name renaming erased at the source-to-core boundary.
+15. height-one substitution represented by base-block instantiation and higher-type atomic beta-reduction;
+16. malformed raw instantiation exposed through `Option` rather than silently coerced;
+17. bound source-name renaming erased at the source-to-core boundary.
