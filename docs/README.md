@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.7 have implemented its name/core/scope/typing/occurrence/open-close/renaming/selected-closing layers and the height-zero variable-substitution kernel. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.8 have implemented its name/core/scope/typing/occurrence/open-close/renaming/selected-closing layers, the height-zero substitution kernel, and the first higher-type substitution stage. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -27,6 +27,7 @@ TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
+TakeutiGLC/Syntax/Instantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
@@ -49,9 +50,11 @@ The stable core already fixes and implements the following choices:
 - bound-index renaming with independent variable/function maps;
 - binder-aware lifting and variable/function weakening for every stable syntactic category;
 - path-sensitive closing that consumes §3.1 selections and binds exactly the indicated variable occurrences for §3.2;
-- the height-zero case of Takeuti §5.2 complete variable substitution, with replacement weakening across variable binders, function binders, and abstraction blocks.
+- the height-zero case of Takeuti §5.2 complete variable substitution, with replacement weakening across variable binders, function binders, and abstraction blocks;
+- simultaneous instantiation of base-type variable blocks;
+- the height-one case of complete variable substitution, including beta-reduction of matching higher-type atomic occurrences.
 
-The project is now inside Takeuti's §5 substitution machinery. The next slice is the higher-type inductive step of complete variable substitution; functional substitution and the §5 interaction laws follow after that.
+The project is now inside Takeuti's higher-type §5.2 induction. The next slice generalizes the instantiation machinery to formal variables of positive height so complete substitution can proceed at arbitrary finite height.
 
 ## Reading order
 
