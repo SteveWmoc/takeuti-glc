@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.8 have implemented its name/core/scope/typing/occurrence/open-close/renaming/selected-closing layers, the height-zero substitution kernel, and the first higher-type substitution stage. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.9 have implemented its name/core/scope/typing/occurrence/open-close/renaming/selected-closing layers together with complete variable substitution through arbitrary finite type height. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -28,6 +28,7 @@ TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
 TakeutiGLC/Syntax/Instantiation.lean
+TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
@@ -52,9 +53,11 @@ The stable core already fixes and implements the following choices:
 - path-sensitive closing that consumes §3.1 selections and binds exactly the indicated variable occurrences for §3.2;
 - the height-zero case of Takeuti §5.2 complete variable substitution, with replacement weakening across variable binders, function binders, and abstraction blocks;
 - simultaneous instantiation of base-type variable blocks;
-- the height-one case of complete variable substitution, including beta-reduction of matching higher-type atomic occurrences.
+- the height-one case of complete variable substitution, including beta-reduction of matching higher-type atomic occurrences;
+- fuel-indexed hereditary instantiation of higher-type formal-variable blocks;
+- unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step.
 
-The project is now inside Takeuti's higher-type §5.2 induction. The next slice generalizes the instantiation machinery to formal variables of positive height so complete substitution can proceed at arbitrary finite height.
+The construction part of Takeuti §5.2 is now represented. The next variable-substitution work is metatheoretic: preservation and the identity/composition/commutation properties in §§5.2.29–5.2.35, before moving to functional substitution.
 
 ## Reading order
 

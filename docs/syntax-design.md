@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.8 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, base-block instantiation, and the first two substitution-height layers in
+M2.1–M2.9 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, base-block instantiation, hereditary instantiation, and complete variable substitution across arbitrary finite height in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -16,10 +16,11 @@ TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
 TakeutiGLC/Syntax/Instantiation.lean
+TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-`Substitution.lean` implements the height-zero case of Takeuti's complete variable substitution and the first higher-type stage, height one. `Instantiation.lean` supplies the base-variable block reduction needed to realize clause 5.2.26 in that case. The next target is arbitrary finite height, where formal variables in the replacement abstraction may themselves be higher-type atomic heads.
+`Substitution.lean` now exposes a unified arbitrary-height complete variable substitution. `HereditaryInstantiation.lean` supplies the recursive beta-reduction needed for clause 5.2.26 when formal variables in a replacement abstraction are themselves higher-type atomic heads. The remaining §5.2 work is metatheoretic: preservation and the identity/commutation properties 5.2.29–5.2.35.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -216,7 +217,15 @@ For a target of height one, every argument level is zero. Thus a replacement abs
 
 `Formula.completeSubstituteHeightOneVar?` then implements the first higher-type instance of Takeuti's clause 5.2.26. It recursively transforms the arguments of a matching target atom, checks that the replacement is an abstraction of the same height-one profile and arity, and instantiates the replacement body with those transformed arguments. The transformation returns `Option` because raw syntax is extrinsically typed; malformed uses of a base-type block as atomic heads or profile/arity mismatches are rejected explicitly.
 
-The arbitrary-height clauses of §5.2 remain open. At height two and above, formal variables of the replacement abstraction can themselves occur as higher-type atomic heads, so block instantiation must recursively invoke lower-height substitution rather than only replace base-variable occurrences.
+### 8.3 Arbitrary-height hereditary substitution
+
+At height two and above, a formal variable in the replacement abstraction may itself occur as a higher-type atomic head. `Syntax/HereditaryInstantiation.lean` handles this by annotating each block slot with its singleton level. Base slots are replaced directly; a positive-level atomic head is reduced only after its replacement is recognized as an abstraction of the corresponding singleton type.
+
+The recursive beta step invokes a lower-fuel instantiator on the replacement abstraction's body. Fuel is the maximum binder level in the block, so each hereditary reduction strictly lowers the type level while ordinary traversal remains structural. This is the locally nameless counterpart of Takeuti's use in 5.2.26 of already-defined substitutions whose heights are strictly below the height `N` currently being defined.
+
+`Variety.completeSubstituteVar?`, `Formula.completeSubstituteVar?`, and `Functional.completeSubstituteVar?` use that hereditary kernel to implement complete substitution for arbitrary finite target height. Matching higher-type atoms recursively transform their arguments first, then instantiate the matching replacement abstraction. The operation remains partial on raw syntax because profile, arity, and malformed-bound-head failures are meaningful outside the typed fragment.
+
+The construction clauses 5.2.21–5.2.28 are therefore represented. The next work is to prove the source-level properties 5.2.29–5.2.35 for the stable core operation.
 
 ## 9. Source-to-core correspondence
 
@@ -331,10 +340,11 @@ TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
 TakeutiGLC/Syntax/SelectedClosing.lean
 TakeutiGLC/Syntax/Instantiation.lean
+TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next extension generalizes the instantiation/substitution recursion from height one to arbitrary finite height before adding functional substitution.
+The next extension is metatheoretic: prove typing/scope preservation and the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
@@ -357,5 +367,6 @@ The project currently treats the following as fixed unless later proof work supp
 13. selection-aware closing as the §3.2 consumer of variable-occurrence selections;
 14. height-zero complete variable substitution represented by structural recursion plus namespace-specific weakening under binders;
 15. height-one substitution represented by base-block instantiation and higher-type atomic beta-reduction;
-16. malformed raw instantiation exposed through `Option` rather than silently coerced;
-17. bound source-name renaming erased at the source-to-core boundary.
+16. arbitrary-height substitution represented by fuel-indexed hereditary block instantiation, with fuel bounded by the maximum formal-variable level;
+17. malformed raw instantiation exposed through `Option` rather than silently coerced;
+18. bound source-name renaming erased at the source-to-core boundary.

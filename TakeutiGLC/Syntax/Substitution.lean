@@ -1,4 +1,4 @@
-import TakeutiGLC.Syntax.Instantiation
+import TakeutiGLC.Syntax.HereditaryInstantiation
 
 /-!
 # Complete variable substitution
@@ -294,6 +294,171 @@ theorem completeSubstituteHeightOneVar_beta
     Variety.completeSubstituteHeightOneVar?, Formula.instantiateBaseVarBlock?,
     Formula.instantiateBaseVarBlockAt?, instantiateBaseVarBlockArgsAt?,
     Variety.instantiateBaseVarBlockAt?, Variety.liftIntoScope, abstractionProfile, blockSize]
+
+end Formula
+
+
+mutual
+
+/--
+Capture-avoiding complete substitution for a free variable of arbitrary finite
+Takeuti height.
+
+For a base-type target, a matching free variety occurrence is replaced
+directly. For a higher-type target, a matching atomic occurrence is reduced by
+hereditarily instantiating the body of the replacement abstraction with the
+recursively transformed arguments, implementing the pattern of §5.2.26.
+-/
+def Variety.completeSubstituteVar?
+    (target : VariableName) (replacement : Variety) : Variety → Option Variety
+  | .freeVar name =>
+      if name = target then
+        if target.profile = .zero then some replacement else none
+      else
+        some (.freeVar name)
+  | .specialVar name => some (.specialVar name)
+  | .boundVar index => some (.boundVar index)
+  | .freeFunApp name args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (.freeFunApp name args')
+  | .specialFunApp name args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (.specialFunApp name args')
+  | .boundFunApp index args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (.boundFunApp index args')
+  | .abstract headLevel tailLevels body => do
+      let body' ← Formula.completeSubstituteVar? target
+        (replacement.weakenVarBy (blockSize tailLevels)) body
+      some (.abstract headLevel tailLevels body')
+
+/-- Complete arbitrary-height variable substitution in a formula. -/
+def Formula.completeSubstituteVar?
+    (target : VariableName) (replacement : Variety) : Formula → Option Formula
+  | .atomFree name args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      if name = target then
+        match target.profile with
+        | .zero => none
+        | .higher headLevel tailLevels =>
+            match replacement with
+            | .abstract replacementHead replacementTail replacementBody =>
+                if abstractionProfile replacementHead replacementTail = target.profile then
+                  if args'.length = blockSize replacementTail then
+                    Formula.hereditaryInstantiateVarBlock?
+                      (headLevel :: tailLevels) args' replacementBody
+                  else
+                    none
+                else
+                  none
+            | _ => none
+      else
+        some (.atomFree name args')
+  | .atomSpecial name args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (.atomSpecial name args')
+  | .atomBound index args => do
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (.atomBound index args')
+  | .neg body => do
+      let body' ← Formula.completeSubstituteVar? target replacement body
+      some (.neg body')
+  | .conj left right => do
+      let left' ← Formula.completeSubstituteVar? target replacement left
+      let right' ← Formula.completeSubstituteVar? target replacement right
+      some (.conj left' right')
+  | .disj left right => do
+      let left' ← Formula.completeSubstituteVar? target replacement left
+      let right' ← Formula.completeSubstituteVar? target replacement right
+      some (.disj left' right')
+  | .allVar profile body => do
+      let body' ← Formula.completeSubstituteVar? target replacement.weakenVar body
+      some (.allVar profile body')
+  | .existsVar profile body => do
+      let body' ← Formula.completeSubstituteVar? target replacement.weakenVar body
+      some (.existsVar profile body')
+  | .allFun profile body => do
+      let body' ← Formula.completeSubstituteVar? target replacement.weakenFun body
+      some (.allFun profile body')
+  | .existsFun profile body => do
+      let body' ← Formula.completeSubstituteVar? target replacement.weakenFun body
+      some (.existsFun profile body')
+
+/-- Arbitrary-height complete variable substitution through an argument list. -/
+def completeSubstituteVarArgs?
+    (target : VariableName) (replacement : Variety) :
+    List Variety → Option (List Variety)
+  | [] => some []
+  | arg :: args => do
+      let arg' ← Variety.completeSubstituteVar? target replacement arg
+      let args' ← completeSubstituteVarArgs? target replacement args
+      some (arg' :: args')
+
+end
+
+namespace Functional
+
+/-- Complete arbitrary-height variable substitution through a functional. -/
+def completeSubstituteVar?
+    (target : VariableName) (replacement : Variety) : Functional → Option Functional
+  | .abstract headLevel tailLevels body => do
+      let body' ← Variety.completeSubstituteVar? target
+        (replacement.weakenVarBy (blockSize tailLevels)) body
+      some (.abstract headLevel tailLevels body')
+
+end Functional
+
+namespace Variety
+
+/-- Regression: the arbitrary-height driver contains the height-zero base case. -/
+theorem completeSubstituteVar_base
+    (replacement : Variety) :
+    let target : VariableName := ⟨.zero, 0⟩
+    Variety.completeSubstituteVar? target replacement (.freeVar target) =
+      some replacement := by
+  rfl
+
+end Variety
+
+namespace Formula
+
+/-- Regression: the arbitrary-height driver reproduces the height-one beta case. -/
+theorem completeSubstituteVar_heightOne_beta
+    (predicate argumentName : VariableName) :
+    let target : VariableName := ⟨.higher 0 [], 0⟩
+    let replacement : Variety :=
+      .abstract 0 [] (.atomSpecial predicate [.boundVar 0])
+    Formula.completeSubstituteVar? target replacement
+      (.atomFree target [.specialVar argumentName]) =
+        some (.atomSpecial predicate [.specialVar argumentName]) := by
+  simp [Formula.completeSubstituteVar?, completeSubstituteVarArgs?,
+    Variety.completeSubstituteVar?, Formula.hereditaryInstantiateVarBlock?,
+    Formula.hereditaryInstantiateVarBlockFuel?, Formula.instantiateVarBlockStep?,
+    instantiateVarBlockStepArgs?, Variety.instantiateVarBlockStep?,
+    Variety.liftIntoScope, maxBinderLevel, abstractionProfile, blockSize]
+
+/--
+Regression: height two performs a genuine hereditary beta step.
+
+The replacement for `α : (2)` is `{φ : (1)} φ[c]`; its actual argument is
+the type-`(1)` abstraction `{x} P[x]`. Complete substitution therefore
+reduces `α[{x}P[x]]` to `P[c]`.
+-/
+theorem completeSubstituteVar_heightTwo_beta
+    (predicate constantName : VariableName) :
+    let target : VariableName := ⟨.higher 1 [], 0⟩
+    let argument : Variety :=
+      .abstract 0 [] (.atomSpecial predicate [.boundVar 0])
+    let replacement : Variety :=
+      .abstract 1 [] (.atomBound 0 [.specialVar constantName])
+    Formula.completeSubstituteVar? target replacement
+      (.atomFree target [argument]) =
+        some (.atomSpecial predicate [.specialVar constantName]) := by
+  simp [Formula.completeSubstituteVar?, completeSubstituteVarArgs?,
+    Variety.completeSubstituteVar?, Formula.hereditaryInstantiateVarBlock?,
+    Formula.hereditaryInstantiateVarBlockFuel?, Formula.instantiateVarBlockStep?,
+    instantiateVarBlockStepArgs?, Variety.instantiateVarBlockStep?,
+    Variety.liftIntoScope, maxBinderLevel, abstractionProfile, blockSize]
 
 end Formula
 
