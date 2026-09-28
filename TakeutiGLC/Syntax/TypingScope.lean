@@ -1,3 +1,4 @@
+import Mathlib.Tactic
 import TakeutiGLC.Syntax.Typing
 
 /-!
@@ -51,7 +52,7 @@ theorem functionAt_lt {ctx : TypingContext} {index : Nat}
     (ctx.underBlock headLevel tailLevels).scope =
       ctx.scope.underBlock tailLevels := by
   simp [TypingContext.scope, TypingContext.underBlock, Scope.underBlock,
-    abstractionBinderTypes, blockSize, Nat.add_comm]
+    abstractionBinderTypes, blockSize, Nat.add_comm]; omega
 
 end TypingContext
 
@@ -76,7 +77,7 @@ def Variety.HasType.toWellScoped
         (TypingContext.functionAt_lt hlookup)
         (VarietiesHaveTypes.toWellScoped hargs)
   | .abstract ctx headLevel tailLevels body hbody =>
-      .abstract ctx.scope headLevel tailLevels (by
+      .abstract ctx.scope headLevel tailLevels body (by
         simpa only [TypingContext.scope_underBlock] using
           Formula.WellFormed.toWellScoped hbody)
 
@@ -136,13 +137,13 @@ def VarietiesHaveTypes.toWellScoped
 end
 
 /-- A well-typed functional is structurally well scoped. -/
-def Functional.HasType.toWellScoped
+theorem Functional.HasType.toWellScoped
     {ctx : TypingContext} {functional : Functional} {profile : TypeProfile}
     (h : Functional.HasType ctx functional profile) :
-    Functional.WellScoped ctx.scope functional :=
-  match h with
-  | .abstract ctx headLevel tailLevels body hbody =>
-      .abstract ctx.scope headLevel tailLevels (by
+    Functional.WellScoped ctx.scope functional := by
+  cases h with
+  | abstract ctx headLevel tailLevels body hbody =>
+      exact .abstract ctx.scope headLevel tailLevels body (by
         simpa only [TypingContext.scope_underBlock] using
           Variety.HasType.toWellScoped hbody)
 
