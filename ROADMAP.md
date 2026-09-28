@@ -29,6 +29,7 @@ Active development is organized in milestones so that foundational representatio
 - [x] Promote the chosen locally nameless representation to stable core syntax.
 - [x] Define structural well-scopedness with independent variable/function depths.
 - [x] Define the extrinsic typing judgment for §§2–3.
+- [x] Prove that well-typed varieties, formulas, argument lists, and functionals are structurally well scoped.
 - [x] Complete source-level well-formedness side conditions for non-vacuous quantifiers.
 - [x] Define the auxiliary occurrence-selection mechanism required by §3.2 and §5.
 - [x] Promote opening/closing operations to the stable syntax namespace.
