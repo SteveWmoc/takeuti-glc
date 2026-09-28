@@ -4,13 +4,14 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.9 have implemented the stable name, raw-syntax, structural-scope, typing, occurrence, opening/closing, renaming/weakening, selection-aware closing, base-block instantiation, hereditary instantiation, and complete variable substitution across arbitrary finite height in
+M2.1–M2.10 have implemented stable syntax, arbitrary-height complete variable substitution, and the typing-to-scope proof bridge in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
 TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
+TakeutiGLC/Syntax/TypingScope.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -172,7 +173,7 @@ with the expected rules:
 
 A closed core expression is well scoped at the empty two-depth scope. `TypingContext.scope` forgets stored profiles and retains exactly these two lengths.
 
-A later metatheory lemma should prove that typing implies structural well-scopedness. The lightweight scope proposition remains useful because opening, closing, renaming, and substitution often need scope preservation independently of typing.
+`Syntax/TypingScope.lean` now proves that typing implies structural well-scopedness for varieties, formulas, argument lists, and functionals. Successful variable/function lookups imply index bounds; context-forgetting commutes with the appropriate binder extensions, including simultaneous abstraction blocks. The lightweight scope proposition remains useful because opening, closing, renaming, and substitution often need scope preservation independently of typing.
 
 ## 7. De Bruijn convention and stable opening/closing
 
@@ -344,7 +345,7 @@ TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next extension is metatheoretic: prove typing/scope preservation and the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
+The next extension is metatheoretic: use the typing-to-scope bridge to prove substitution preservation, then address the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
