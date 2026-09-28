@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. The stable locally nameless syntax now implements Takeuti's complete variable substitution across arbitrary finite type height, using hereditary instantiation for the higher-type case of §5.2.26.
+> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height; the first proof-layer invariant now establishes that extrinsic typing implies structural well-scopedness. Substitution preservation and §5.2 identity/commutation remain future theorems.
 
 ## Source and scope
 
@@ -27,6 +27,7 @@ The stable syntax layer currently contains:
 - independent de Bruijn namespaces for bound variables and bound functions;
 - nonempty variable-abstraction blocks for §§2.6 and 3.2;
 - structural well-scopedness judgments and closedness predicates;
+- a typing-to-scope theorem for varieties, formulas, argument lists, and functionals;
 - independent variable/function typing contexts;
 - extrinsic typing for varieties and functionals;
 - typed well-formedness for formulas and pointwise argument typing;
@@ -54,7 +55,7 @@ Milestone 1 compared an intrinsically scoped de Bruijn encoding with a locally n
 
 Variable and function binders use separate de Bruijn namespaces. Historical bound names disappear at the source-to-core boundary, so ordinary core equality is intended to absorb admissible bound renaming rather than requiring a pervasive quotient by alpha-equivalence.
 
-Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies.
+Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies. `Syntax/TypingScope.lean` proves that these typing judgments entail the corresponding structural scope invariants, including both de Bruijn namespaces and simultaneous abstraction blocks.
 
 Takeuti's indication notation is also kept extrinsic. `OccurrencePath` addresses a particular named occurrence without changing the raw expression, while finite variable/function selections record which occurrences are indicated. `SelectedClosing.lean` consumes those selections to bind exactly the indicated variable occurrences for §3.2 while leaving unindicated occurrences of the same name free.
 
