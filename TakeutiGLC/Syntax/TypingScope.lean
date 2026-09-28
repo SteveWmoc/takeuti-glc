@@ -59,7 +59,7 @@ end TypingContext
 mutual
 
 /-- A well-typed variety is structurally well scoped in the forgotten typing context. -/
-def Variety.HasType.toWellScoped
+theorem Variety.HasType.toWellScoped
     {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
     (h : Variety.HasType ctx variety profile) :
     Variety.WellScoped ctx.scope variety :=
@@ -82,7 +82,7 @@ def Variety.HasType.toWellScoped
           Formula.WellFormed.toWellScoped hbody)
 
 /-- A well-formed formula is structurally well scoped. -/
-def Formula.WellFormed.toWellScoped
+theorem Formula.WellFormed.toWellScoped
     {ctx : TypingContext} {formula : Formula}
     (h : Formula.WellFormed ctx formula) :
     Formula.WellScoped ctx.scope formula :=
@@ -123,7 +123,7 @@ def Formula.WellFormed.toWellScoped
           Formula.WellFormed.toWellScoped hbody)
 
 /-- Pointwise typing implies pointwise structural scope. -/
-def VarietiesHaveTypes.toWellScoped
+theorem VarietiesHaveTypes.toWellScoped
     {ctx : TypingContext} {args : List Variety} {profiles : List TypeProfile}
     (h : VarietiesHaveTypes ctx args profiles) :
     VarietiesWellScoped ctx.scope args :=
@@ -142,7 +142,7 @@ theorem Functional.HasType.toWellScoped
     (h : Functional.HasType ctx functional profile) :
     Functional.WellScoped ctx.scope functional := by
   cases h with
-  | abstract ctx headLevel tailLevels body hbody =>
+  | abstract headLevel tailLevels body hbody =>
       exact .abstract ctx.scope headLevel tailLevels body (by
         simpa only [TypingContext.scope_underBlock] using
           Variety.HasType.toWellScoped hbody)
