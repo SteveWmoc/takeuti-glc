@@ -5,6 +5,7 @@ import TakeutiGLC.Syntax.Core
 import TakeutiGLC.Syntax.Scope
 import TakeutiGLC.Syntax.Typing
 import TakeutiGLC.Syntax.TypingScope
+import TakeutiGLC.Syntax.TypedRenaming
 import TakeutiGLC.Syntax.Occurrence
 import TakeutiGLC.Syntax.OpenClose
 import TakeutiGLC.Syntax.Renaming
