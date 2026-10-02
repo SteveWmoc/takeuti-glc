@@ -28,11 +28,11 @@ typed lookup in both independent de Bruijn namespaces.
 -/
 structure RespectsTyping
     (source target : TypingContext) (rename : Renaming) : Prop where
-  variable :
+  variableLookup :
     ∀ {index : Nat} {profile : TypeProfile},
       source.variableAt index = some profile →
       target.variableAt (rename.varMap index) = some profile
-  function :
+  functionLookup :
     ∀ {index : Nat} {profile : FunctionProfile},
       source.functionAt index = some profile →
       target.functionAt (rename.funMap index) = some profile
@@ -57,9 +57,9 @@ theorem comp
     Renaming.RespectsTyping source target (Renaming.comp outer inner) := by
   constructor
   · intro index profile h
-    exact houter.variable (hinner.variable h)
+    exact houter.variableLookup (hinner.variableLookup h)
   · intro index profile h
-    exact houter.function (hinner.function h)
+    exact houter.functionLookup (hinner.functionLookup h)
 
 /-- Crossing one variable binder preserves a typing-respecting renaming. -/
 theorem underVar
@@ -77,11 +77,11 @@ theorem underVar
     | succ index =>
         have hsource : source.variableAt index = some result := by
           simpa [TypingContext.variableAt, TypingContext.underVar] using hlookup
-        have htarget := h.variable hsource
+        have htarget := h.variableLookup hsource
         simpa [TypingContext.variableAt, TypingContext.underVar,
           Renaming.underVar, Renaming.liftIndex] using htarget
   · intro index result hlookup
-    have htarget := h.function hlookup
+    have htarget := h.functionLookup hlookup
     simpa [TypingContext.functionAt, TypingContext.underVar,
       Renaming.underVar] using htarget
 
@@ -94,7 +94,7 @@ theorem underFun
       (source.underFun profile) (target.underFun profile) rename.underFun := by
   constructor
   · intro index result hlookup
-    have htarget := h.variable hlookup
+    have htarget := h.variableLookup hlookup
     simpa [TypingContext.variableAt, TypingContext.underFun,
       Renaming.underFun] using htarget
   · intro index result hlookup
@@ -105,7 +105,7 @@ theorem underFun
     | succ index =>
         have hsource : source.functionAt index = some result := by
           simpa [TypingContext.functionAt, TypingContext.underFun] using hlookup
-        have htarget := h.function hsource
+        have htarget := h.functionLookup hsource
         simpa [TypingContext.functionAt, TypingContext.underFun,
           Renaming.underFun, Renaming.liftIndex] using htarget
 
@@ -126,7 +126,8 @@ theorem underVariablePrefix
       simpa [Renaming.liftIndexBy] using h
   | cons profile profiles ih =>
       have hstep := ih.underVar profile
-      simpa [TypingContext.underVar, List.cons_append, Renaming.liftIndexBy] using hstep
+      simpa [TypingContext.underVar, List.cons_append, Renaming.underVar,
+        Renaming.liftIndexBy] using hstep
 
 /-- Crossing one simultaneous Takeuti abstraction block preserves typed renaming. -/
 theorem underBlock
@@ -156,24 +157,33 @@ theorem Variety.HasType.rename
     (h : Variety.HasType source variety profile) :
     Variety.HasType target (variety.rename rename) profile :=
   match h with
-  | .freeVar _ name hprofile =>
-      .freeVar target name hprofile
-  | .specialVar _ name hprofile =>
-      .specialVar target name hprofile
-  | .boundVar _ index hlookup =>
-      .boundVar target (rename.varMap index) (hrename.variable hlookup)
-  | .freeFunApp _ name args hargs =>
-      .freeFunApp target name _ (VarietiesHaveTypes.rename hrename hargs)
-  | .specialFunApp _ name args hargs =>
-      .specialFunApp target name _ (VarietiesHaveTypes.rename hrename hargs)
-  | .boundFunApp _ index functionProfile args hlookup hargs =>
-      .boundFunApp target (rename.funMap index) functionProfile _
-        (hrename.function hlookup)
-        (VarietiesHaveTypes.rename hrename hargs)
-  | .abstract _ headLevel tailLevels body hbody =>
-      .abstract target headLevel tailLevels _ (by
-        simpa [Variety.rename] using
-          Formula.WellFormed.rename
+  | .freeVar _ name hprofile => by
+      simpa [Variety.rename] using Variety.HasType.freeVar target name hprofile
+  | .specialVar _ name hprofile => by
+      simpa [Variety.rename] using Variety.HasType.specialVar target name hprofile
+  | .boundVar _ index hlookup => by
+      simpa [Variety.rename] using
+        Variety.HasType.boundVar target (rename.varMap index)
+          (hrename.variableLookup hlookup)
+  | .freeFunApp _ name args hargs => by
+      simpa [Variety.rename] using
+        Variety.HasType.freeFunApp target name (args.map (Variety.rename rename))
+          (VarietiesHaveTypes.rename hrename hargs)
+  | .specialFunApp _ name args hargs => by
+      simpa [Variety.rename] using
+        Variety.HasType.specialFunApp target name (args.map (Variety.rename rename))
+          (VarietiesHaveTypes.rename hrename hargs)
+  | .boundFunApp _ index functionProfile args hlookup hargs => by
+      simpa [Variety.rename] using
+        Variety.HasType.boundFunApp target (rename.funMap index) functionProfile
+          (args.map (Variety.rename rename))
+          (hrename.functionLookup hlookup)
+          (VarietiesHaveTypes.rename hrename hargs)
+  | .abstract _ headLevel tailLevels body hbody => by
+      simpa [Variety.rename] using
+        Variety.HasType.abstract target headLevel tailLevels
+          (Formula.rename (rename.underBlock tailLevels) body)
+          (Formula.WellFormed.rename
             (hrename.underBlock headLevel tailLevels) hbody)
 
 /-- Typed renaming preserves well-formed formulas. -/
@@ -184,40 +194,56 @@ theorem Formula.WellFormed.rename
     (h : Formula.WellFormed source formula) :
     Formula.WellFormed target (formula.rename rename) :=
   match h with
-  | .atomFree _ name args hnonzero hargs =>
-      .atomFree target name _ hnonzero (VarietiesHaveTypes.rename hrename hargs)
-  | .atomSpecial _ name args hnonzero hargs =>
-      .atomSpecial target name _ hnonzero (VarietiesHaveTypes.rename hrename hargs)
-  | .atomBound _ index profile args hlookup hnonzero hargs =>
-      .atomBound target (rename.varMap index) profile _
-        (hrename.variable hlookup) hnonzero
-        (VarietiesHaveTypes.rename hrename hargs)
-  | .neg _ body hbody =>
-      .neg target _ (Formula.WellFormed.rename hrename hbody)
-  | .conj _ left right hleft hright =>
-      .conj target _ _
-        (Formula.WellFormed.rename hrename hleft)
-        (Formula.WellFormed.rename hrename hright)
-  | .disj _ left right hleft hright =>
-      .disj target _ _
-        (Formula.WellFormed.rename hrename hleft)
-        (Formula.WellFormed.rename hrename hright)
-  | .allVar _ profile body hbody =>
-      .allVar target profile _ (by
-        simpa [Formula.rename] using
-          Formula.WellFormed.rename (hrename.underVar profile) hbody)
-  | .existsVar _ profile body hbody =>
-      .existsVar target profile _ (by
-        simpa [Formula.rename] using
-          Formula.WellFormed.rename (hrename.underVar profile) hbody)
-  | .allFun _ profile body hbody =>
-      .allFun target profile _ (by
-        simpa [Formula.rename] using
-          Formula.WellFormed.rename (hrename.underFun profile) hbody)
-  | .existsFun _ profile body hbody =>
-      .existsFun target profile _ (by
-        simpa [Formula.rename] using
-          Formula.WellFormed.rename (hrename.underFun profile) hbody)
+  | .atomFree _ name args hnonzero hargs => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.atomFree target name (args.map (Variety.rename rename))
+          hnonzero (VarietiesHaveTypes.rename hrename hargs)
+  | .atomSpecial _ name args hnonzero hargs => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.atomSpecial target name (args.map (Variety.rename rename))
+          hnonzero (VarietiesHaveTypes.rename hrename hargs)
+  | .atomBound _ index profile args hlookup hnonzero hargs => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.atomBound target (rename.varMap index) profile
+          (args.map (Variety.rename rename))
+          (hrename.variableLookup hlookup) hnonzero
+          (VarietiesHaveTypes.rename hrename hargs)
+  | .neg _ body hbody => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.neg target (Formula.rename rename body)
+          (Formula.WellFormed.rename hrename hbody)
+  | .conj _ left right hleft hright => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.conj target
+          (Formula.rename rename left) (Formula.rename rename right)
+          (Formula.WellFormed.rename hrename hleft)
+          (Formula.WellFormed.rename hrename hright)
+  | .disj _ left right hleft hright => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.disj target
+          (Formula.rename rename left) (Formula.rename rename right)
+          (Formula.WellFormed.rename hrename hleft)
+          (Formula.WellFormed.rename hrename hright)
+  | .allVar _ profile body hbody => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.allVar target profile
+          (Formula.rename rename.underVar body)
+          (Formula.WellFormed.rename (hrename.underVar profile) hbody)
+  | .existsVar _ profile body hbody => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.existsVar target profile
+          (Formula.rename rename.underVar body)
+          (Formula.WellFormed.rename (hrename.underVar profile) hbody)
+  | .allFun _ profile body hbody => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.allFun target profile
+          (Formula.rename rename.underFun body)
+          (Formula.WellFormed.rename (hrename.underFun profile) hbody)
+  | .existsFun _ profile body hbody => by
+      simpa [Formula.rename] using
+        Formula.WellFormed.existsFun target profile
+          (Formula.rename rename.underFun body)
+          (Formula.WellFormed.rename (hrename.underFun profile) hbody)
 
 /-- Typed renaming preserves pointwise argument typing. -/
 theorem VarietiesHaveTypes.rename
