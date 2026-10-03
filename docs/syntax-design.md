@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.10 have implemented stable syntax, arbitrary-height complete variable substitution, and the typing-to-scope proof bridge in
+M2.1–M2.11 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, and typed-renaming preservation in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -12,6 +12,7 @@ TakeutiGLC/Syntax/Core.lean
 TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/TypingScope.lean
+TakeutiGLC/Syntax/TypedRenaming.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -202,7 +203,7 @@ funMap : Nat → Nat
 
 Free and special names are never changed by this operation. Crossing a variable quantifier lifts only `varMap`; crossing a function quantifier lifts only `funMap`; crossing a Takeuti abstraction block lifts `varMap` by the full block size. The same renaming recursion is defined for `Variety`, `Formula`, and `Functional`.
 
-Weakening is the special renaming obtained by inserting a fresh de Bruijn slot at a cutoff. Separate variable and function weakening operations preserve the independence of the two namespaces. Identity and composition are exposed at the renaming level so later §5 proofs can state functoriality and substitution-interaction laws without rebuilding index arithmetic.
+Weakening is the special renaming obtained by inserting a fresh de Bruijn slot at a cutoff. Separate variable and function weakening operations preserve the independence of the two namespaces. `Syntax/TypedRenaming.lean` adds `Renaming.RespectsTyping`, proves it stable under identity, composition, both quantifier families, arbitrary variable prefixes, and Takeuti abstraction blocks, and proves that such renamings preserve all core formation judgments. The next specialization is typed weakening, which is needed whenever substitution carries a replacement beneath a binder.
 
 ### 8.1 Height-zero complete variable substitution
 
@@ -345,7 +346,7 @@ TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next extension is metatheoretic: use the typing-to-scope bridge to prove substitution preservation, then address the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
+The next extension is metatheoretic: specialize typed renaming to weakening, then prove substitution preservation and address the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 
