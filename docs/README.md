@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.11 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, and typed-renaming preservation. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.12 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed renaming, and typed weakening. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -25,6 +25,7 @@ TakeutiGLC/Syntax/Scope.lean
 TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/TypingScope.lean
 TakeutiGLC/Syntax/TypedRenaming.lean
+TakeutiGLC/Syntax/TypedWeakening.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -46,6 +47,7 @@ The stable core already fixes and implements the following choices:
 - extrinsic type formation for varieties, formulas, argument lists, and functionals;
 - proofs that all four typed syntactic categories satisfy structural well-scopedness;
 - a typing-respecting renaming relation, stable under both quantifier families and Takeuti abstraction blocks, with formation-preservation theorems;
+- typed one-step weakening in both namespaces plus iterated variable weakening beneath simultaneous abstraction blocks;
 - terms as type-`(0)` varieties rather than a fourth raw syntax category;
 - structural occurrence paths for free variables and free functions;
 - finite metasyntactic occurrence selections for §3.1 partial indication and §3.3 full indication;
@@ -61,7 +63,7 @@ The stable core already fixes and implements the following choices:
 - fuel-indexed hereditary instantiation of higher-type formal-variable blocks;
 - unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step.
 
-The construction part of Takeuti §5.2 is represented. The proof layer now has typing-to-scope and generic typed-renaming preservation. The next slice should derive typed weakening from this infrastructure, then use it in complete-substitution preservation before the identity/composition/commutation properties in §§5.2.29–5.2.35.
+The construction part of Takeuti §5.2 is represented. The proof layer now has typing-to-scope, generic typed-renaming preservation, and the typed weakenings needed when a replacement crosses quantifiers or an abstraction block. The next slice can attack complete-substitution preservation directly before the identity/composition/commutation properties in §§5.2.29–5.2.35.
 
 ## Reading order
 
