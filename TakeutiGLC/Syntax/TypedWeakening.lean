@@ -140,18 +140,26 @@ theorem weakenVar
     {ctx : TypingContext} {args : List Variety} {profiles : List TypeProfile}
     (h : VarietiesHaveTypes ctx args profiles) (inserted : TypeProfile) :
     VarietiesHaveTypes (ctx.underVar inserted)
-      (args.map Variety.weakenVar) profiles := by
-  simpa [Variety.weakenVar, Variety.weakenVarAt] using
-    VarietiesHaveTypes.rename (Renaming.RespectsTyping.weakenVar ctx inserted) h
+      (args.map Variety.weakenVar) profiles :=
+  match h with
+  | .nil _ => .nil (ctx.underVar inserted)
+  | .cons _ head headType tail tailTypes hhead htail =>
+      .cons (ctx.underVar inserted) _ headType _ tailTypes
+        (Variety.HasType.weakenVar hhead inserted)
+        (VarietiesHaveTypes.weakenVar htail inserted)
 
 /-- Pointwise argument typing is preserved by one fresh function binder. -/
 theorem weakenFun
     {ctx : TypingContext} {args : List Variety} {profiles : List TypeProfile}
     (h : VarietiesHaveTypes ctx args profiles) (inserted : FunctionProfile) :
     VarietiesHaveTypes (ctx.underFun inserted)
-      (args.map Variety.weakenFun) profiles := by
-  simpa [Variety.weakenFun, Variety.weakenFunAt] using
-    VarietiesHaveTypes.rename (Renaming.RespectsTyping.weakenFun ctx inserted) h
+      (args.map Variety.weakenFun) profiles :=
+  match h with
+  | .nil _ => .nil (ctx.underFun inserted)
+  | .cons _ head headType tail tailTypes hhead htail =>
+      .cons (ctx.underFun inserted) _ headType _ tailTypes
+        (Variety.HasType.weakenFun hhead inserted)
+        (VarietiesHaveTypes.weakenFun htail inserted)
 
 end VarietiesHaveTypes
 
