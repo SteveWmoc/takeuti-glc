@@ -202,4 +202,42 @@ theorem weakenUnderBlock
 
 end Variety.IsTerm
 
+namespace Variety.WellTyped
+
+/-- Existential variety typing is preserved by one fresh variable binder. -/
+theorem weakenVar
+    {ctx : TypingContext} {variety : Variety}
+    (h : Variety.WellTyped ctx variety) (inserted : TypeProfile) :
+    Variety.WellTyped (ctx.underVar inserted) variety.weakenVar := by
+  obtain ⟨profile, htype⟩ := h
+  exact ⟨profile, Variety.HasType.weakenVar htype inserted⟩
+
+/-- Existential variety typing is preserved by one fresh function binder. -/
+theorem weakenFun
+    {ctx : TypingContext} {variety : Variety}
+    (h : Variety.WellTyped ctx variety) (inserted : FunctionProfile) :
+    Variety.WellTyped (ctx.underFun inserted) variety.weakenFun := by
+  obtain ⟨profile, htype⟩ := h
+  exact ⟨profile, Variety.HasType.weakenFun htype inserted⟩
+
+end Variety.WellTyped
+
+namespace Functional.WellFormed
+
+/-- Functional well-formedness is preserved by one fresh variable binder. -/
+theorem weakenVar
+    {ctx : TypingContext} {functional : Functional}
+    (h : Functional.WellFormed ctx functional) (inserted : TypeProfile) :
+    Functional.WellFormed (ctx.underVar inserted) functional.weakenVar := by
+  exact Functional.HasType.weakenVar h inserted
+
+/-- Functional well-formedness is preserved by one fresh function binder. -/
+theorem weakenFun
+    {ctx : TypingContext} {functional : Functional}
+    (h : Functional.WellFormed ctx functional) (inserted : FunctionProfile) :
+    Functional.WellFormed (ctx.underFun inserted) functional.weakenFun := by
+  exact Functional.HasType.weakenFun h inserted
+
+end Functional.WellFormed
+
 end TakeutiGLC
