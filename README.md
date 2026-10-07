@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height; the proof layer now includes typing-to-scope and typed-renaming preservation. Typed weakening and substitution preservation are the next targets before §5.2 identity/commutation.
+> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height; the proof layer now includes typing-to-scope, typed renaming, and typed weakening through both binder families and whole Takeuti abstraction blocks. Substitution preservation is the next target before §5.2 identity/commutation.
 
 ## Source and scope
 
@@ -40,6 +40,7 @@ The stable syntax layer currently contains:
 - simultaneous variable-block opening/closing with the first displayed binder at index `0`;
 - bound-index renamings with independent variable/function maps and binder-aware lifting;
 - a typed-renaming relation and formation-preservation theorems across both namespaces and abstraction blocks;
+- typed weakening for variables, functions, argument lists, functionals, terms, and simultaneous abstraction blocks;
 - variable and function weakening for varieties, formulas, and functionals;
 - path-sensitive closing of exactly the indicated free-variable occurrences, including simultaneous §3.2-style blocks;
 - capture-avoiding substitution of terms for free variables of type `(0)`, including weakening across both binder namespaces and abstraction blocks;
@@ -56,7 +57,7 @@ Milestone 1 compared an intrinsically scoped de Bruijn encoding with a locally n
 
 Variable and function binders use separate de Bruijn namespaces. Historical bound names disappear at the source-to-core boundary, so ordinary core equality is intended to absorb admissible bound renaming rather than requiring a pervasive quotient by alpha-equivalence.
 
-Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies. `Syntax/TypingScope.lean` proves that these typing judgments entail the corresponding structural scope invariants. `Syntax/TypedRenaming.lean` then proves that any bound-index renaming preserving context lookups also preserves the type/formation judgments, including through both binder families and simultaneous abstraction blocks.
+Typing is likewise extrinsic. `TypingContext` carries independent lists of variable types and function profiles; de Bruijn indices are typed by lookup, while free and special internal names carry their profiles directly. The typing relation enforces argument compatibility, the `(0)` result of function application, abstraction result profiles, and the term condition on functional bodies. `Syntax/TypingScope.lean` proves that these typing judgments entail the corresponding structural scope invariants. `Syntax/TypedRenaming.lean` proves generic formation preservation under lookup-preserving renamings, and `Syntax/TypedWeakening.lean` specializes that result to the one-step and whole-block weakenings used by substitution.
 
 Takeuti's indication notation is also kept extrinsic. `OccurrencePath` addresses a particular named occurrence without changing the raw expression, while finite variable/function selections record which occurrences are indicated. `SelectedClosing.lean` consumes those selections to bind exactly the indicated variable occurrences for §3.2 while leaving unindicated occurrences of the same name free.
 
