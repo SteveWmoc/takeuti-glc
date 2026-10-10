@@ -93,7 +93,7 @@ theorem Variety.HasType.completeSubstituteVar
           exact .boundFunApp _ index functionProfile args' hlookup
             (VarietiesHaveTypes.completeSubstituteVar
               hreplacement hargs hargsrun)
-  | abstract _ headLevel tailLevels body hbody =>
+  | abstract headLevel tailLevels body hbody =>
       cases hbodyrun :
           Formula.completeSubstituteVar? target
             (replacement.weakenVarBy (blockSize tailLevels)) body with
@@ -139,6 +139,7 @@ theorem Formula.WellFormed.completeSubstituteVar
                   simpa [htargetProfile] using hreplacement
                 obtain ⟨replacementBody, hreplacementShape, hreplacementBody⟩ :=
                   hreplacement'.higher_inv
+                subst replacement
                 have hargsTyped :
                     VarietiesHaveTypes ctx args'
                       ((headLevel :: tailLevels).map TypeProfile.monotype) := by
