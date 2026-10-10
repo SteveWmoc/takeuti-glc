@@ -29,6 +29,21 @@ def instantiationSourceContext
       variablePrefix ++ levels.map TypeProfile.monotype ++ ctx.variableTypes
     functionProfiles := functionPrefix ++ ctx.functionProfiles }
 
+namespace List
+
+theorem length_le_of_getElem?_eq_none
+    {α : Type} {items : List α} {index : Nat}
+    (h : items[index]? = none) :
+    items.length ≤ index := by
+  by_contra hnot
+  have hlt : index < items.length := Nat.lt_of_not_ge hnot
+  have hsome : items[index]? = some items[index] := by
+    simp [hlt]
+  rw [h] at hsome
+  simp at hsome
+
+end List
+
 namespace TypingContext
 
 theorem instantiation_variableAt_before
@@ -97,21 +112,6 @@ theorem instantiation_variableAt_after_of_none
   exact instantiation_variableAt_after ctx variablePrefix functionPrefix levels outer
 
 end TypingContext
-
-namespace List
-
-theorem length_le_of_getElem?_eq_none
-    {α : Type} {items : List α} {index : Nat}
-    (h : items[index]? = none) :
-    items.length ≤ index := by
-  by_contra hnot
-  have hlt : index < items.length := Nat.lt_of_not_ge hnot
-  have hsome : items[index]? = some items[index] := by
-    simp [hlt]
-  rw [h] at hsome
-  simp at hsome
-
-end List
 
 namespace VarietiesHaveTypes
 
