@@ -143,27 +143,28 @@ theorem Formula.WellFormed.completeSubstituteVar
                     VarietiesHaveTypes ctx args'
                       ((headLevel :: tailLevels).map TypeProfile.monotype) := by
                   simpa [htargetProfile] using hargs'
-                have hlength : args'.length = blockSize tailLevels := by
-                  have hlen := hargsTyped.length_eq
-                  simpa [blockSize] using hlen
-                have hheritage :
-                    Formula.hereditaryInstantiateVarBlock?
-                      (headLevel :: tailLevels) args' replacementBody =
-                        some result := by
-                  simpa [Formula.completeSubstituteVar?, hargsrun,
+                by_cases hlength : args'.length = blockSize tailLevels
+                · have hheritage :
+                      Formula.hereditaryInstantiateVarBlock?
+                        (headLevel :: tailLevels) args' replacementBody =
+                          some result := by
+                    simpa [Formula.completeSubstituteVar?, hargsrun,
+                      htargetProfile, hreplacementShape, abstractionProfile,
+                      hlength] using hrun
+                  have hbodyTyped :
+                      Formula.WellFormed
+                        { ctx with
+                          variableTypes :=
+                            (headLevel :: tailLevels).map TypeProfile.monotype ++
+                              ctx.variableTypes }
+                        replacementBody := by
+                    simpa [TypingContext.underBlock, abstractionBinderTypes] using
+                      hreplacementBody
+                  exact Formula.hereditaryInstantiateVarBlock_preserves
+                    hbodyTyped hargsTyped hheritage
+                · simp [Formula.completeSubstituteVar?, hargsrun,
                     htargetProfile, hreplacementShape, abstractionProfile,
-                    hlength] using hrun
-                have hbodyTyped :
-                    Formula.WellFormed
-                      { ctx with
-                        variableTypes :=
-                          (headLevel :: tailLevels).map TypeProfile.monotype ++
-                            ctx.variableTypes }
-                      replacementBody := by
-                  simpa [TypingContext.underBlock, abstractionBinderTypes] using
-                    hreplacementBody
-                exact Formula.hereditaryInstantiateVarBlock_preserves
-                  hbodyTyped hargsTyped hheritage
+                    hlength] at hrun
           · simp [Formula.completeSubstituteVar?, hargsrun, hname] at hrun
             subst result
             exact .atomFree _ name args' hnonzero hargs'
