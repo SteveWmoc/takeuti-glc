@@ -72,8 +72,7 @@ theorem getElem?_append_right
   induction left with
   | nil => simp
   | cons head tail ih =>
-      change (tail ++ right)[tail.length + index]? = right[index]?
-      exact ih
+      simpa [Nat.succ_add] using ih
 
 theorem getElem?_map
     {α β : Type} (f : α → β) (items : List α) (index : Nat) :
@@ -96,9 +95,8 @@ theorem instantiation_variableAt_before
     (hindex : index < variablePrefix.length) :
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index =
       (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt index := by
-  change
-    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
-      (variablePrefix ++ ctx.variableTypes)[index]?
+  dsimp [TypingContext.variableAt, instantiationSourceContext,
+    instantiationTargetContext]
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
@@ -117,10 +115,7 @@ theorem instantiation_variableAt_block
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt
       (variablePrefix.length + relative) =
         some (TypeProfile.monotype level) := by
-  change
-    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
-        variablePrefix.length + relative]? =
-      some (TypeProfile.monotype level)
+  dsimp [TypingContext.variableAt, instantiationSourceContext]
   have hrelative : relative < levels.length :=
     List.lt_length_of_getElem?_eq_some hlevel
   calc
@@ -130,7 +125,8 @@ theorem instantiation_variableAt_block
         (levels.map TypeProfile.monotype ++ ctx.variableTypes)[relative]? :=
       List.getElem?_append_right _ _ relative
     _ = (levels.map TypeProfile.monotype)[relative]? :=
-      List.getElem?_append_left_of_lt _ _ (by simpa using hrelative)
+      List.getElem?_append_left_of_lt _ _ (by
+        simpa only [List.length_map] using hrelative)
     _ = (levels[relative]?).map TypeProfile.monotype :=
       List.getElem?_map TypeProfile.monotype levels relative
     _ = some (TypeProfile.monotype level) := by rw [hlevel]; rfl
@@ -144,10 +140,8 @@ theorem instantiation_variableAt_after
       (variablePrefix.length + levels.length + index) =
     (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
       (variablePrefix.length + index) := by
-  change
-    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
-        variablePrefix.length + levels.length + index]? =
-      (variablePrefix ++ ctx.variableTypes)[variablePrefix.length + index]?
+  dsimp [TypingContext.variableAt, instantiationSourceContext,
+    instantiationTargetContext]
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
