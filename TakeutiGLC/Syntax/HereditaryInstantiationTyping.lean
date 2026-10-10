@@ -72,7 +72,8 @@ theorem getElem?_append_right
   induction left with
   | nil => simp
   | cons head tail ih =>
-      simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using ih
+      change (tail ++ right)[tail.length + index]? = right[index]?
+      exact ih
 
 theorem getElem?_map
     {α β : Type} (f : α → β) (items : List α) (index : Nat) :
@@ -82,7 +83,7 @@ theorem getElem?_map
   | cons head tail ih =>
       cases index with
       | zero => rfl
-      | succ index => simpa using ih index
+      | succ index => exact ih index
 
 end List
 namespace TypingContext
