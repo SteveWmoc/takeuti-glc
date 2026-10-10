@@ -146,7 +146,33 @@ theorem get?_hasType
           obtain ⟨argument, hargument, htype⟩ := ih hprofile
           exact ⟨argument, by simpa using hargument, htype⟩
 
+/-- A singleton expected profile forces a singleton typed argument list. -/
+theorem singleton_inv
+    {ctx : TypingContext} {args : List Variety} {profile : TypeProfile}
+    (h : VarietiesHaveTypes ctx args [profile]) :
+    ∃ argument, args = [argument] ∧ Variety.HasType ctx argument profile := by
+  cases h with
+  | cons _ head headType tail tailTypes hhead htail =>
+      cases htail with
+      | nil _ =>
+          exact ⟨head, rfl, hhead⟩
+
 end VarietiesHaveTypes
+
+namespace Variety.HasType
+
+/-- A variety of positive singleton type is necessarily a one-place abstraction. -/
+theorem monotype_succ_inv
+    {ctx : TypingContext} {variety : Variety} {level : Nat}
+    (h : Variety.HasType ctx variety (TypeProfile.monotype (Nat.succ level))) :
+    ∃ body,
+      variety = .abstract level [] body ∧
+      Formula.WellFormed (ctx.underBlock level []) body := by
+  cases h with
+  | abstract _ headLevel tailLevels body hbody =>
+      exact ⟨body, rfl, hbody⟩
+
+end Variety.HasType
 
 /--
 Typing-preservation contract for the lower-height callback used by one
