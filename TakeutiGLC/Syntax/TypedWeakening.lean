@@ -125,22 +125,6 @@ theorem weakenFunPrefix
   simpa using h.weakenFunByReverse inserted.reverse
 
 /--
-The raw `liftIntoScope` operation preserves a variety's type when the supplied
-depths are realized by concrete variable/function prefixes.
--/
-theorem liftIntoPrefixes
-    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
-    (h : Variety.HasType ctx variety profile)
-    (variablePrefix : List TypeProfile) (functionPrefix : List FunctionProfile) :
-    Variety.HasType
-      { variableTypes := variablePrefix ++ ctx.variableTypes
-        functionProfiles := functionPrefix ++ ctx.functionProfiles }
-      (variety.liftIntoScope variablePrefix.length functionPrefix.length) profile := by
-  have hvar := h.weakenVarPrefix variablePrefix
-  have hfun := hvar.weakenFunPrefix functionPrefix
-  simpa [Variety.liftIntoScope] using hfun
-
-/--
 A typed variety may pass beneath an entire Takeuti abstraction block.
 
 This is the weakening shape used by complete substitution when its replacement
