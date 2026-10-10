@@ -95,6 +95,52 @@ theorem weakenVarPrefix
   simpa using h.weakenVarByReverse inserted.reverse
 
 /--
+Iterated function weakening, with inserted profiles listed in reverse insertion
+order.
+-/
+theorem weakenFunByReverse
+    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
+    (h : Variety.HasType ctx variety profile) (inserted : List FunctionProfile) :
+    Variety.HasType
+      { ctx with functionProfiles := inserted.reverse ++ ctx.functionProfiles }
+      (variety.weakenFunBy inserted.length) profile := by
+  induction inserted generalizing ctx variety with
+  | nil =>
+      simpa using h
+  | cons head tail ih =>
+      have hhead :
+          Variety.HasType (ctx.underFun head) variety.weakenFun profile :=
+        h.weakenFun head
+      have htail := ih hhead
+      simpa [Variety.weakenFunBy, TypingContext.underFun, List.reverse_cons,
+        List.append_assoc] using htail
+
+/-- A typed variety may be weakened beneath an arbitrary prefix of function profiles. -/
+theorem weakenFunPrefix
+    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
+    (h : Variety.HasType ctx variety profile) (inserted : List FunctionProfile) :
+    Variety.HasType
+      { ctx with functionProfiles := inserted ++ ctx.functionProfiles }
+      (variety.weakenFunBy inserted.length) profile := by
+  simpa using h.weakenFunByReverse inserted.reverse
+
+/--
+The raw `liftIntoScope` operation preserves a variety's type when the supplied
+depths are realized by concrete variable/function prefixes.
+-/
+theorem liftIntoPrefixes
+    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
+    (h : Variety.HasType ctx variety profile)
+    (variablePrefix : List TypeProfile) (functionPrefix : List FunctionProfile) :
+    Variety.HasType
+      { variableTypes := variablePrefix ++ ctx.variableTypes
+        functionProfiles := functionPrefix ++ ctx.functionProfiles }
+      (variety.liftIntoScope variablePrefix.length functionPrefix.length) profile := by
+  have hvar := h.weakenVarPrefix variablePrefix
+  have hfun := hvar.weakenFunPrefix functionPrefix
+  simpa [Variety.liftIntoScope] using hfun
+
+/--
 A typed variety may pass beneath an entire Takeuti abstraction block.
 
 This is the weakening shape used by complete substitution when its replacement
