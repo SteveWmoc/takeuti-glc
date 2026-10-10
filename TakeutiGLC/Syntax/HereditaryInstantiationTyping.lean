@@ -97,6 +97,7 @@ theorem instantiation_variableAt_before
       (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt index := by
   dsimp [TypingContext.variableAt, instantiationSourceContext,
     instantiationTargetContext]
+  rw [List.append_assoc]
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
@@ -116,6 +117,7 @@ theorem instantiation_variableAt_block
       (variablePrefix.length + relative) =
         some (TypeProfile.monotype level) := by
   dsimp [TypingContext.variableAt, instantiationSourceContext]
+  rw [List.append_assoc]
   have hrelative : relative < levels.length :=
     List.lt_length_of_getElem?_eq_some hlevel
   calc
@@ -142,6 +144,7 @@ theorem instantiation_variableAt_after
       (variablePrefix.length + index) := by
   dsimp [TypingContext.variableAt, instantiationSourceContext,
     instantiationTargetContext]
+  rw [List.append_assoc]
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
