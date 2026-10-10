@@ -70,9 +70,9 @@ theorem getElem?_append_right
     {α : Type} (left right : List α) (index : Nat) :
     (left ++ right)[left.length + index]? = right[index]? := by
   induction left with
-  | nil => rfl
+  | nil => simp
   | cons head tail ih =>
-      simpa [Nat.succ_eq_add_one, Nat.add_assoc] using ih
+      simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using ih
 
 theorem getElem?_map
     {α β : Type} (f : α → β) (items : List α) (index : Nat) :
@@ -95,7 +95,9 @@ theorem instantiation_variableAt_before
     (hindex : index < variablePrefix.length) :
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index =
       (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt index := by
-  unfold instantiationSourceContext instantiationTargetContext variableAt
+  change
+    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
+      (variablePrefix ++ ctx.variableTypes)[index]?
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
@@ -114,7 +116,10 @@ theorem instantiation_variableAt_block
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt
       (variablePrefix.length + relative) =
         some (TypeProfile.monotype level) := by
-  unfold instantiationSourceContext variableAt
+  change
+    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
+        variablePrefix.length + relative]? =
+      some (TypeProfile.monotype level)
   have hrelative : relative < levels.length :=
     List.lt_length_of_getElem?_eq_some hlevel
   calc
@@ -138,7 +143,10 @@ theorem instantiation_variableAt_after
       (variablePrefix.length + levels.length + index) =
     (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
       (variablePrefix.length + index) := by
-  unfold instantiationSourceContext instantiationTargetContext variableAt
+  change
+    (variablePrefix ++ (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
+        variablePrefix.length + levels.length + index]? =
+      (variablePrefix ++ ctx.variableTypes)[variablePrefix.length + index]?
   calc
     (variablePrefix ++
         (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
@@ -185,38 +193,14 @@ theorem instantiation_variableAt_after_of_none
       index - levels.length = variablePrefix.length + outer := by
     dsimp [outer]
     omega
-  calc
-    (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
-        (index - levels.length) =
-      (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
-        (variablePrefix.length + outer) := by
-          congr 1
-          exact htarget
-    _ =
-      (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt
-        (variablePrefix.length + levels.length + outer) :=
-          (instantiation_variableAt_after
-            ctx variablePrefix functionPrefix levels outer).symm
-    _ =
-      (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index := by
-        congr 1
-        exact hindex.symm
+  rw [htarget, hindex]
+  exact
+    (instantiation_variableAt_after
+      ctx variablePrefix functionPrefix levels outer).symm
 
 end TypingContext
 
 namespace VarietiesHaveTypes
-
-/-- Pointwise typing forces the argument and profile lists to have equal length. -/
-theorem length_eq
-    {ctx : TypingContext} {args : List Variety} {profiles : List TypeProfile}
-    (h : VarietiesHaveTypes ctx args profiles) :
-    args.length = profiles.length := by
-  cases h with
-  | nil _ => rfl
-  | cons _ head headType tail tailTypes hhead htail =>
-      have ih := VarietiesHaveTypes.length_eq htail
-      simp [ih]
-termination_by args.length
 
 /-- Recover the typed argument at a known profile-list position. -/
 theorem get?_hasType
