@@ -144,14 +144,17 @@ theorem Formula.WellFormed.completeSubstituteVar
                     VarietiesHaveTypes ctx args'
                       ((headLevel :: tailLevels).map TypeProfile.monotype) := by
                   simpa [htargetProfile] using hargs'
+                have hrun' := hrun
+                simp only [Formula.completeSubstituteVar?] at hrun'
+                rw [hargsrun] at hrun'
+                simp only [Option.bind_some] at hrun'
+                simp [htargetProfile, abstractionProfile] at hrun'
                 by_cases hlength : args'.length = blockSize tailLevels
                 · have hheritage :
                       Formula.hereditaryInstantiateVarBlock?
                         (headLevel :: tailLevels) args' replacementBody =
                           some result := by
-                    simpa [Formula.completeSubstituteVar?, hargsrun,
-                      htargetProfile, hreplacementShape, abstractionProfile,
-                      hlength] using hrun
+                    simpa [hlength] using hrun'
                   have hbodyTyped :
                       Formula.WellFormed
                         { ctx with
@@ -163,9 +166,7 @@ theorem Formula.WellFormed.completeSubstituteVar
                       hreplacementBody
                   exact Formula.hereditaryInstantiateVarBlock_preserves
                     hbodyTyped hargsTyped hheritage
-                · simp [Formula.completeSubstituteVar?, hargsrun,
-                    htargetProfile, hreplacementShape, abstractionProfile,
-                    hlength] at hrun
+                · simp [hlength] at hrun'
           · simp [Formula.completeSubstituteVar?, hargsrun, hname] at hrun
             subst result
             exact .atomFree _ name args' hnonzero hargs'
@@ -328,14 +329,17 @@ theorem completeSubstituteVar
         some result) :
     Functional.HasType ctx result profile := by
   cases h with
-  | abstract _ headLevel tailLevels body hbody =>
+  | abstract headLevel tailLevels body hbody =>
       cases hbodyrun :
           Variety.completeSubstituteVar? target
             (replacement.weakenVarBy (blockSize tailLevels)) body with
       | none =>
           simp [Functional.completeSubstituteVar?, hbodyrun] at hrun
       | some body' =>
-          simp [Functional.completeSubstituteVar?, hbodyrun] at hrun
+          have hrun' := hrun
+          simp only [Functional.completeSubstituteVar?] at hrun'
+          rw [hbodyrun] at hrun'
+          simp at hrun'
           subst result
           have hreplacement' :
               Variety.HasType (ctx.underBlock headLevel tailLevels)
