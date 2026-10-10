@@ -681,4 +681,81 @@ theorem VarietiesHaveTypes.instantiateVarBlockStep
 
 end
 
+namespace LowerVarBlockInstantiation
+
+/-- The callback that always fails vacuously preserves typing. -/
+theorem none_preserves :
+    PreservesTyping (fun _ _ _ => none) := by
+  intro ctx levels replacements body result hbody hreplacements hrun
+  simp at hrun
+
+end LowerVarBlockInstantiation
+
+namespace Formula
+
+/--
+Every fuel stage of hereditary block instantiation preserves well-formedness
+whenever it succeeds on a well-typed block and well-typed actual arguments.
+-/
+theorem hereditaryInstantiateVarBlockFuel_preserves
+    (fuel : Nat) :
+    (Formula.hereditaryInstantiateVarBlockFuel? fuel).PreservesTyping := by
+  induction fuel with
+  | zero =>
+      intro ctx levels replacements body result hbody hreplacements hrun
+      by_cases hlength : levels.length = replacements.length
+      · have hstep :
+            Formula.instantiateVarBlockStep? (fun _ _ _ => none)
+              levels replacements 0 0 body = some result := by
+          simpa [Formula.hereditaryInstantiateVarBlockFuel?, hlength] using hrun
+        have hbody' :
+            Formula.WellFormed
+              (instantiationSourceContext ctx [] [] levels) body := by
+          simpa [instantiationSourceContext] using hbody
+        have htyped :=
+          Formula.WellFormed.instantiateVarBlockStep
+            LowerVarBlockInstantiation.none_preserves
+            hreplacements hbody' hstep
+        simpa [instantiationTargetContext] using htyped
+      · simp [Formula.hereditaryInstantiateVarBlockFuel?, hlength] at hrun
+  | succ fuel ih =>
+      intro ctx levels replacements body result hbody hreplacements hrun
+      by_cases hlength : levels.length = replacements.length
+      · have hstep :
+            Formula.instantiateVarBlockStep?
+              (Formula.hereditaryInstantiateVarBlockFuel? fuel)
+              levels replacements 0 0 body = some result := by
+          simpa [Formula.hereditaryInstantiateVarBlockFuel?, hlength] using hrun
+        have hbody' :
+            Formula.WellFormed
+              (instantiationSourceContext ctx [] [] levels) body := by
+          simpa [instantiationSourceContext] using hbody
+        have htyped :=
+          Formula.WellFormed.instantiateVarBlockStep
+            ih hreplacements hbody' hstep
+        simpa [instantiationTargetContext] using htyped
+      · simp [Formula.hereditaryInstantiateVarBlockFuel?, hlength] at hrun
+
+/-- Arbitrary-height hereditary block instantiation preserves formula formation. -/
+theorem hereditaryInstantiateVarBlock_preserves
+    {ctx : TypingContext} {levels : List Nat} {replacements : List Variety}
+    {body result : Formula}
+    (hbody :
+      Formula.WellFormed
+        { ctx with
+          variableTypes := levels.map TypeProfile.monotype ++ ctx.variableTypes }
+        body)
+    (hreplacements :
+      VarietiesHaveTypes ctx replacements (levels.map TypeProfile.monotype))
+    (hrun :
+      Formula.hereditaryInstantiateVarBlock? levels replacements body =
+        some result) :
+    Formula.WellFormed ctx result := by
+  exact
+    Formula.hereditaryInstantiateVarBlockFuel_preserves (maxBinderLevel levels)
+      hbody hreplacements
+      (by simpa [Formula.hereditaryInstantiateVarBlock?] using hrun)
+
+end Formula
+
 end TakeutiGLC
