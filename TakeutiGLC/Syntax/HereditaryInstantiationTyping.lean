@@ -42,8 +42,49 @@ theorem length_le_of_getElem?_eq_none
   rw [h] at hsome
   simp at hsome
 
-end List
+theorem lt_length_of_getElem?_eq_some
+    {α : Type} {items : List α} {index : Nat} {item : α}
+    (h : items[index]? = some item) :
+    index < items.length := by
+  by_contra hnot
+  have hnone : items[index]? = none := by
+    simp [Nat.le_of_not_gt hnot]
+  rw [hnone] at h
+  simp at h
 
+theorem getElem?_append_left_of_lt
+    {α : Type} (left right : List α) {index : Nat}
+    (hindex : index < left.length) :
+    (left ++ right)[index]? = left[index]? := by
+  induction left generalizing index with
+  | nil =>
+      simp at hindex
+  | cons head tail ih =>
+      cases index with
+      | zero => rfl
+      | succ index =>
+          simp at hindex
+          simpa using ih (index := index) hindex
+
+theorem getElem?_append_right
+    {α : Type} (left right : List α) (index : Nat) :
+    (left ++ right)[left.length + index]? = right[index]? := by
+  induction left with
+  | nil => rfl
+  | cons head tail ih =>
+      simpa [Nat.succ_eq_add_one, Nat.add_assoc] using ih
+
+theorem getElem?_map
+    {α β : Type} (f : α → β) (items : List α) (index : Nat) :
+    (items.map f)[index]? = (items[index]?).map f := by
+  induction items generalizing index with
+  | nil => simp
+  | cons head tail ih =>
+      cases index with
+      | zero => rfl
+      | succ index => simpa using ih index
+
+end List
 namespace TypingContext
 
 theorem instantiation_variableAt_before
@@ -54,7 +95,15 @@ theorem instantiation_variableAt_before
     (hindex : index < variablePrefix.length) :
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index =
       (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt index := by
-  simp [instantiationSourceContext, instantiationTargetContext, variableAt, hindex]
+  unfold instantiationSourceContext instantiationTargetContext variableAt
+  calc
+    (variablePrefix ++
+        (levels.map TypeProfile.monotype ++ ctx.variableTypes))[index]? =
+        variablePrefix[index]? :=
+      List.getElem?_append_left_of_lt _ _ hindex
+    _ = (variablePrefix ++ ctx.variableTypes)[index]? := by
+      symm
+      exact List.getElem?_append_left_of_lt _ _ hindex
 
 theorem instantiation_variableAt_block
     (ctx : TypingContext)
@@ -65,7 +114,20 @@ theorem instantiation_variableAt_block
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt
       (variablePrefix.length + relative) =
         some (TypeProfile.monotype level) := by
-  simp [instantiationSourceContext, variableAt, hlevel]
+  unfold instantiationSourceContext variableAt
+  have hrelative : relative < levels.length :=
+    List.lt_length_of_getElem?_eq_some hlevel
+  calc
+    (variablePrefix ++
+        (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
+          variablePrefix.length + relative]? =
+        (levels.map TypeProfile.monotype ++ ctx.variableTypes)[relative]? :=
+      List.getElem?_append_right _ _ relative
+    _ = (levels.map TypeProfile.monotype)[relative]? :=
+      List.getElem?_append_left_of_lt _ _ (by simpa using hrelative)
+    _ = (levels[relative]?).map TypeProfile.monotype :=
+      List.getElem?_map TypeProfile.monotype levels relative
+    _ = some (TypeProfile.monotype level) := by rw [hlevel]; rfl
 
 theorem instantiation_variableAt_after
     (ctx : TypingContext)
@@ -76,7 +138,23 @@ theorem instantiation_variableAt_after
       (variablePrefix.length + levels.length + index) =
     (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
       (variablePrefix.length + index) := by
-  simp [instantiationSourceContext, instantiationTargetContext, variableAt]
+  unfold instantiationSourceContext instantiationTargetContext variableAt
+  calc
+    (variablePrefix ++
+        (levels.map TypeProfile.monotype ++ ctx.variableTypes))[
+          variablePrefix.length + levels.length + index]? =
+        (levels.map TypeProfile.monotype ++ ctx.variableTypes)[levels.length + index]? := by
+      simpa [Nat.add_assoc] using
+        (List.getElem?_append_right variablePrefix
+          (levels.map TypeProfile.monotype ++ ctx.variableTypes)
+          (levels.length + index))
+    _ = ctx.variableTypes[index]? := by
+      simpa using
+        (List.getElem?_append_right (levels.map TypeProfile.monotype)
+          ctx.variableTypes index)
+    _ = (variablePrefix ++ ctx.variableTypes)[variablePrefix.length + index]? := by
+      symm
+      exact List.getElem?_append_right variablePrefix ctx.variableTypes index
 
 theorem instantiation_functionAt
     (ctx : TypingContext)
@@ -107,9 +185,22 @@ theorem instantiation_variableAt_after_of_none
       index - levels.length = variablePrefix.length + outer := by
     dsimp [outer]
     omega
-  rw [hindex, htarget]
-  symm
-  exact instantiation_variableAt_after ctx variablePrefix functionPrefix levels outer
+  calc
+    (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
+        (index - levels.length) =
+      (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
+        (variablePrefix.length + outer) := by
+          congr 1
+          exact htarget
+    _ =
+      (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt
+        (variablePrefix.length + levels.length + outer) :=
+          (instantiation_variableAt_after
+            ctx variablePrefix functionPrefix levels outer).symm
+    _ =
+      (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index := by
+        congr 1
+        exact hindex.symm
 
 end TypingContext
 
@@ -120,9 +211,12 @@ theorem length_eq
     {ctx : TypingContext} {args : List Variety} {profiles : List TypeProfile}
     (h : VarietiesHaveTypes ctx args profiles) :
     args.length = profiles.length := by
-  induction h with
-  | nil => rfl
-  | cons _ _ _ _ _ _ _ ih => simp [ih]
+  cases h with
+  | nil _ => rfl
+  | cons _ head headType tail tailTypes hhead htail =>
+      have ih := VarietiesHaveTypes.length_eq htail
+      simp [ih]
+termination_by args.length
 
 /-- Recover the typed argument at a known profile-list position. -/
 theorem get?_hasType
@@ -132,10 +226,10 @@ theorem get?_hasType
     (hprofile : profiles[index]? = some profile) :
     ∃ argument,
       args[index]? = some argument ∧ Variety.HasType ctx argument profile := by
-  induction h generalizing index profile with
-  | nil =>
+  cases h with
+  | nil _ =>
       simp at hprofile
-  | cons ctx head headType tail tailTypes hhead htail ih =>
+  | cons _ head headType tail tailTypes hhead htail =>
       cases index with
       | zero =>
           simp at hprofile
@@ -143,8 +237,10 @@ theorem get?_hasType
           exact ⟨head, by simp, hhead⟩
       | succ index =>
           simp at hprofile
-          obtain ⟨argument, hargument, htype⟩ := ih hprofile
+          obtain ⟨argument, hargument, htype⟩ :=
+            VarietiesHaveTypes.get?_hasType htail hprofile
           exact ⟨argument, by simpa using hargument, htype⟩
+termination_by args.length
 
 /-- A singleton expected profile forces a singleton typed argument list. -/
 theorem singleton_inv
@@ -213,7 +309,7 @@ mutual
 /-- One hereditary-instantiation traversal preserves the type of a variety. -/
 theorem Variety.HasType.instantiateVarBlockStep
     {lower : LowerVarBlockInstantiation}
-    (hlower : lower.PreservesTyping)
+    (hlower : LowerVarBlockInstantiation.PreservesTyping lower)
     {ctx : TypingContext}
     {variablePrefix : List TypeProfile}
     {functionPrefix : List FunctionProfile}
@@ -244,7 +340,7 @@ theorem Variety.HasType.instantiateVarBlockStep
       by_cases hcut : index < variablePrefix.length
       · simp [Variety.instantiateVarBlockStep?, hcut] at hrun
         subst result
-        apply .boundVar
+        apply Variety.HasType.boundVar
         rw [← TypingContext.instantiation_variableAt_before
           ctx variablePrefix functionPrefix levels hcut]
         exact hlookup
@@ -253,7 +349,7 @@ theorem Variety.HasType.instantiateVarBlockStep
         | none =>
             simp [Variety.instantiateVarBlockStep?, hcut, hlevel] at hrun
             subst result
-            apply .boundVar
+            apply Variety.HasType.boundVar
             rw [TypingContext.instantiation_variableAt_after_of_none
               ctx variablePrefix functionPrefix levels hprefix hlevel]
             exact hlookup
@@ -341,12 +437,17 @@ theorem Variety.HasType.instantiateVarBlockStep
       | some body' =>
           simp [Variety.instantiateVarBlockStep?, hbodyrun] at hrun
           subst result
+          have hcutoff :
+              (added ++ variablePrefix).length =
+                variablePrefix.length + blockSize tailLevels := by
+            simp [added, abstractionBinderTypes, blockSize]
+            omega
           have hbodyrun' :
               Formula.instantiateVarBlockStep? lower levels replacements
                 (added ++ variablePrefix).length functionPrefix.length body =
                   some body' := by
-            simpa [added, abstractionBinderTypes, blockSize,
-              List.length_append, Nat.add_comm] using hbodyrun
+            rw [hcutoff]
+            exact hbodyrun
           have htyped :=
             Formula.WellFormed.instantiateVarBlockStep
               hlower hreplacements hbody' hbodyrun'
@@ -357,7 +458,7 @@ theorem Variety.HasType.instantiateVarBlockStep
 /-- One hereditary-instantiation traversal preserves well-formed formulas. -/
 theorem Formula.WellFormed.instantiateVarBlockStep
     {lower : LowerVarBlockInstantiation}
-    (hlower : lower.PreservesTyping)
+    (hlower : LowerVarBlockInstantiation.PreservesTyping lower)
     {ctx : TypingContext}
     {variablePrefix : List TypeProfile}
     {functionPrefix : List FunctionProfile}
@@ -481,9 +582,16 @@ theorem Formula.WellFormed.instantiateVarBlockStep
                                 (instantiationTargetContext ctx
                                   variablePrefix functionPrefix).variableTypes }
                           replacementBody := by
-                      simpa [TypingContext.underBlock, abstractionBinderTypes] using
-                        hreplacementBody
-                    exact hlower hbodyForLower
+                      simpa [TypingContext.underBlock, abstractionBinderTypes,
+                        instantiationTargetContext] using hreplacementBody
+                    exact hlower
+                      (ctx := instantiationTargetContext
+                        ctx variablePrefix functionPrefix)
+                      (levels := [predecessor])
+                      (replacements := [argument])
+                      (body := replacementBody)
+                      (result := result)
+                      hbodyForLower
                       (.cons _ argument (TypeProfile.monotype predecessor) [] []
                         hargument (.nil _))
                       hlowerRun
@@ -651,7 +759,7 @@ theorem Formula.WellFormed.instantiateVarBlockStep
 /-- One hereditary-instantiation traversal preserves pointwise argument typing. -/
 theorem VarietiesHaveTypes.instantiateVarBlockStep
     {lower : LowerVarBlockInstantiation}
-    (hlower : lower.PreservesTyping)
+    (hlower : LowerVarBlockInstantiation.PreservesTyping lower)
     {ctx : TypingContext}
     {variablePrefix : List TypeProfile}
     {functionPrefix : List FunctionProfile}
@@ -715,7 +823,8 @@ whenever it succeeds on a well-typed block and well-typed actual arguments.
 -/
 theorem hereditaryInstantiateVarBlockFuel_preserves
     (fuel : Nat) :
-    (Formula.hereditaryInstantiateVarBlockFuel? fuel).PreservesTyping := by
+    LowerVarBlockInstantiation.PreservesTyping
+      (Formula.hereditaryInstantiateVarBlockFuel? fuel) := by
   induction fuel with
   | zero =>
       intro ctx levels replacements body result hbody hreplacements hrun
