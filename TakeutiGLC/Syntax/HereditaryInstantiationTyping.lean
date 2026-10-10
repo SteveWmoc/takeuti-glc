@@ -71,7 +71,47 @@ theorem instantiation_functionAt
     (instantiationSourceContext ctx variablePrefix functionPrefix levels).functionAt index =
     (instantiationTargetContext ctx variablePrefix functionPrefix).functionAt index := rfl
 
+theorem instantiation_variableAt_after_of_none
+    (ctx : TypingContext)
+    (variablePrefix : List TypeProfile)
+    (functionPrefix : List FunctionProfile)
+    (levels : List Nat) {index : Nat}
+    (hprefix : variablePrefix.length ≤ index)
+    (hnone : levels[index - variablePrefix.length]? = none) :
+    (instantiationTargetContext ctx variablePrefix functionPrefix).variableAt
+        (index - levels.length) =
+      (instantiationSourceContext ctx variablePrefix functionPrefix levels).variableAt index := by
+  have hlevels : levels.length ≤ index - variablePrefix.length :=
+    List.length_le_of_getElem?_eq_none hnone
+  let outer := index - variablePrefix.length - levels.length
+  have hindex :
+      index = variablePrefix.length + levels.length + outer := by
+    dsimp [outer]
+    omega
+  have htarget :
+      index - levels.length = variablePrefix.length + outer := by
+    dsimp [outer]
+    omega
+  rw [hindex, htarget]
+  symm
+  exact instantiation_variableAt_after ctx variablePrefix functionPrefix levels outer
+
 end TypingContext
+
+namespace List
+
+theorem length_le_of_getElem?_eq_none
+    {α : Type} {items : List α} {index : Nat}
+    (h : items[index]? = none) :
+    items.length ≤ index := by
+  by_contra hnot
+  have hlt : index < items.length := Nat.lt_of_not_ge hnot
+  have hsome : items[index]? = some items[index] := by
+    simp [hlt]
+  rw [h] at hsome
+  simp at hsome
+
+end List
 
 namespace VarietiesHaveTypes
 
