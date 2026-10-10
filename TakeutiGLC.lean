@@ -13,6 +13,7 @@ import TakeutiGLC.Syntax.Renaming
 import TakeutiGLC.Syntax.SelectedClosing
 import TakeutiGLC.Syntax.Instantiation
 import TakeutiGLC.Syntax.HereditaryInstantiation
+import TakeutiGLC.Syntax.HereditaryInstantiationTyping
 import TakeutiGLC.Syntax.Substitution
 import TakeutiGLC.Experiment.Names
 import TakeutiGLC.Experiment.Binding.DeBruijn
