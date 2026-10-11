@@ -7,7 +7,7 @@ This directory separates three kinds of documentation that are easy to confuse i
 | Document | Status | Role |
 | --- | --- | --- |
 | [`syntax-spec.md`](syntax-spec.md) | Current | Faithful source-level account of Takeuti §§1–3; intentionally independent of Lean implementation details. |
-| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.12 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed renaming, and typed weakening. |
+| [`syntax-design.md`](syntax-design.md) | Current | Milestone 1 design record and source-to-core correspondence. M2.1–M2.13 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed renaming/weakening, and formation preservation for hereditary instantiation and complete substitution. |
 | [`binding-experiment.md`](binding-experiment.md) | Historical | M1.3a comparison of intrinsically scoped de Bruijn and locally nameless representations. |
 | [`opening-closing-experiment.md`](opening-closing-experiment.md) | Historical | M1.3b experiment that supplied the decisive evidence for locally nameless syntax. |
 | [`../ROADMAP.md`](../ROADMAP.md) | Current | Milestone status and project-wide QA policy. |
@@ -26,6 +26,8 @@ TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/TypingScope.lean
 TakeutiGLC/Syntax/TypedRenaming.lean
 TakeutiGLC/Syntax/TypedWeakening.lean
+TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
+TakeutiGLC/Syntax/SubstitutionTyping.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -61,9 +63,10 @@ The stable core already fixes and implements the following choices:
 - simultaneous instantiation of base-type variable blocks;
 - the height-one case of complete variable substitution, including beta-reduction of matching higher-type atomic occurrences;
 - fuel-indexed hereditary instantiation of higher-type formal-variable blocks;
-- unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step.
+- unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step;
+- formation-preservation theorems for the hereditary instantiation kernel and complete variable substitution (§§5.2.29–5.2.30).
 
-The construction part of Takeuti §5.2 is represented. The proof layer now has typing-to-scope, generic typed-renaming preservation, and the typed weakenings needed when a replacement crosses quantifiers or an abstraction block. The next slice can attack complete-substitution preservation directly before the identity/composition/commutation properties in §§5.2.29–5.2.35.
+The construction part of Takeuti §5.2 is represented, and §§5.2.29–5.2.30 are now reflected by formation/type preservation theorems for complete substitution. The next variable-substitution slice is the remaining identity/commutation theory in §§5.2.31–5.2.35.
 
 ## Reading order
 
