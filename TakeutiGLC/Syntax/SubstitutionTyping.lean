@@ -390,8 +390,21 @@ theorem completeSubstituteVar
     (hrun :
       Functional.completeSubstituteVar? target replacement functional =
         some result) :
-    Functional.WellFormed ctx result :=
-  Functional.HasType.completeSubstituteVar hreplacement h hrun
+    Functional.WellFormed ctx result := by
+  unfold Functional.WellFormed at h ⊢
+  have htype :=
+    Functional.HasType.completeSubstituteVar hreplacement h hrun
+  cases functional with
+  | abstract headLevel tailLevels body =>
+      cases hbodyrun :
+          Variety.completeSubstituteVar? target
+            (replacement.weakenVarBy (blockSize tailLevels)) body with
+      | none =>
+          simp [Functional.completeSubstituteVar?, hbodyrun] at hrun
+      | some body' =>
+          simp [Functional.completeSubstituteVar?, hbodyrun] at hrun
+          subst result
+          exact htype
 
 end Functional.WellFormed
 
