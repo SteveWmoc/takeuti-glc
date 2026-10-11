@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.12 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming preservation, and typed weakening in
+M2.1–M2.13 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, and complete-substitution formation preservation in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -14,6 +14,8 @@ TakeutiGLC/Syntax/Typing.lean
 TakeutiGLC/Syntax/TypingScope.lean
 TakeutiGLC/Syntax/TypedRenaming.lean
 TakeutiGLC/Syntax/TypedWeakening.lean
+TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
+TakeutiGLC/Syntax/SubstitutionTyping.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -23,7 +25,7 @@ TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-`Substitution.lean` now exposes a unified arbitrary-height complete variable substitution. `HereditaryInstantiation.lean` supplies the recursive beta-reduction needed for clause 5.2.26 when formal variables in a replacement abstraction are themselves higher-type atomic heads. The remaining §5.2 work is metatheoretic: preservation and the identity/commutation properties 5.2.29–5.2.35.
+`Substitution.lean` exposes a unified arbitrary-height complete variable substitution. `HereditaryInstantiation.lean` supplies the recursive beta-reduction needed for clause 5.2.26, while `HereditaryInstantiationTyping.lean` proves that the hereditary kernel preserves formation through every fuel stage. `SubstitutionTyping.lean` lifts this to complete substitution, proving the stable-core counterparts of Takeuti 5.2.29–5.2.30. The remaining §5.2 work is the identity/commutation theory 5.2.31–5.2.35.
 
 This design is based on the source specification in [`syntax-spec.md`](syntax-spec.md) and the executable Milestone 1 experiments documented in [`binding-experiment.md`](binding-experiment.md) and [`opening-closing-experiment.md`](opening-closing-experiment.md).
 
@@ -347,7 +349,7 @@ TakeutiGLC/Syntax/HereditaryInstantiation.lean
 TakeutiGLC/Syntax/Substitution.lean
 ```
 
-The next extension is metatheoretic: prove complete-substitution preservation using typed weakening, then address the §5.2.29–§5.2.35 identity and commutation laws before adding functional substitution.
+The next extension is metatheoretic: prove the remaining §5.2.31–§5.2.35 identity and commutation laws for complete variable substitution before adding functional substitution.
 
 Permanent metatheory should not depend on the experimental modules except where an explicit comparison theorem is useful.
 

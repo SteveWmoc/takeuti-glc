@@ -95,6 +95,36 @@ theorem weakenVarPrefix
   simpa using h.weakenVarByReverse inserted.reverse
 
 /--
+Iterated function weakening, with inserted profiles listed in reverse insertion
+order.
+-/
+theorem weakenFunByReverse
+    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
+    (h : Variety.HasType ctx variety profile) (inserted : List FunctionProfile) :
+    Variety.HasType
+      { ctx with functionProfiles := inserted.reverse ++ ctx.functionProfiles }
+      (variety.weakenFunBy inserted.length) profile := by
+  induction inserted generalizing ctx variety with
+  | nil =>
+      simpa using h
+  | cons head tail ih =>
+      have hhead :
+          Variety.HasType (ctx.underFun head) variety.weakenFun profile :=
+        h.weakenFun head
+      have htail := ih hhead
+      simpa [Variety.weakenFunBy, TypingContext.underFun, List.reverse_cons,
+        List.append_assoc] using htail
+
+/-- A typed variety may be weakened beneath an arbitrary prefix of function profiles. -/
+theorem weakenFunPrefix
+    {ctx : TypingContext} {variety : Variety} {profile : TypeProfile}
+    (h : Variety.HasType ctx variety profile) (inserted : List FunctionProfile) :
+    Variety.HasType
+      { ctx with functionProfiles := inserted ++ ctx.functionProfiles }
+      (variety.weakenFunBy inserted.length) profile := by
+  simpa using h.weakenFunByReverse inserted.reverse
+
+/--
 A typed variety may pass beneath an entire Takeuti abstraction block.
 
 This is the weakening shape used by complete substitution when its replacement
