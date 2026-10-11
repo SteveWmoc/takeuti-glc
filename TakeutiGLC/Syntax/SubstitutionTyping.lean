@@ -350,4 +350,49 @@ theorem completeSubstituteVar
 
 end Functional.HasType
 
+namespace Variety.IsTerm
+
+/-- Complete variable substitution preserves the §2.10 term judgment. -/
+theorem completeSubstituteVar
+    {ctx : TypingContext} {target : VariableName} {replacement : Variety}
+    (hreplacement : Variety.HasType ctx replacement target.profile)
+    {term result : Variety}
+    (h : Variety.IsTerm ctx term)
+    (hrun : Variety.completeSubstituteVar? target replacement term = some result) :
+    Variety.IsTerm ctx result :=
+  Variety.HasType.completeSubstituteVar hreplacement h hrun
+
+end Variety.IsTerm
+
+namespace Variety.WellTyped
+
+/-- Complete variable substitution preserves existential variety well-typing. -/
+theorem completeSubstituteVar
+    {ctx : TypingContext} {target : VariableName} {replacement : Variety}
+    (hreplacement : Variety.HasType ctx replacement target.profile)
+    {variety result : Variety}
+    (h : Variety.WellTyped ctx variety)
+    (hrun : Variety.completeSubstituteVar? target replacement variety = some result) :
+    Variety.WellTyped ctx result := by
+  obtain ⟨profile, htype⟩ := h
+  exact ⟨profile, Variety.HasType.completeSubstituteVar hreplacement htype hrun⟩
+
+end Variety.WellTyped
+
+namespace Functional.WellFormed
+
+/-- Complete variable substitution preserves functional well-formedness. -/
+theorem completeSubstituteVar
+    {ctx : TypingContext} {target : VariableName} {replacement : Variety}
+    (hreplacement : Variety.HasType ctx replacement target.profile)
+    {functional result : Functional}
+    (h : Functional.WellFormed ctx functional)
+    (hrun :
+      Functional.completeSubstituteVar? target replacement functional =
+        some result) :
+    Functional.WellFormed ctx result :=
+  Functional.HasType.completeSubstituteVar hreplacement h hrun
+
+end Functional.WellFormed
+
 end TakeutiGLC
