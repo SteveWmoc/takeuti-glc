@@ -40,7 +40,8 @@ Active development is organized in milestones so that foundational representatio
 - [x] Define the height-zero case of capture-avoiding variable substitution (§5.2.1–§5.2.13).
 - [x] Implement the height-one case of complete variable substitution, including base-block instantiation.
 - [x] Extend complete variable substitution to arbitrary finite height via hereditary instantiation (§5.2.14–§5.2.28).
-- [ ] Prove the §5.2.29–§5.2.35 preservation, identity, and commutation properties for complete variable substitution.
+- [x] Prove the §5.2.29–§5.2.30 formation/type preservation properties for complete variable substitution.
+- [ ] Prove the remaining §5.2.31–§5.2.35 identity and commutation properties for complete variable substitution.
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.
 
