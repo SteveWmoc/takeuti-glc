@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height; the proof layer now includes typing-to-scope, typed renaming, and typed weakening through both binder families and whole Takeuti abstraction blocks. Substitution preservation is the next target before §5.2 identity/commutation.
+> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height, and its formation/type preservation theorems corresponding to Takeuti §§5.2.29–5.2.30 are now proved. The remaining variable-substitution work is the §5.2 identity/commutation theory before functional substitution.
 
 ## Source and scope
 
@@ -47,9 +47,10 @@ The stable syntax layer currently contains:
 - simultaneous instantiation of base-type abstraction blocks with de Bruijn-index contraction and binder-aware argument lifting;
 - complete substitution for free variables of height one, reducing matching atomic occurrences through a replacement abstraction;
 - hereditary instantiation of variable blocks at arbitrary finite singleton levels;
-- a unified `completeSubstituteVar?` operation implementing complete variable substitution at arbitrary finite height.
+- a unified `completeSubstituteVar?` operation implementing complete variable substitution at arbitrary finite height;
+- formation preservation for hereditary instantiation and complete variable substitution, including varieties, formulas, argument lists, functionals, terms, and existential well-typing.
 
-Still to come in Milestone 2 are substitution of functionals for function symbols and the identity/composition/commutation laws corresponding to §5.
+Still to come in Milestone 2 are the remaining identity/commutation laws for complete variable substitution and substitution of functionals for function symbols.
 
 ## Architecture
 
