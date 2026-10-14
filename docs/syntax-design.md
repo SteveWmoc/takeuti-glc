@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.13 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, and complete-substitution formation preservation in
+M2.1–M2.14 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, and complete-substitution formation preservation in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -16,6 +16,7 @@ TakeutiGLC/Syntax/TypedRenaming.lean
 TakeutiGLC/Syntax/TypedWeakening.lean
 TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
 TakeutiGLC/Syntax/SubstitutionTyping.lean
+TakeutiGLC/Syntax/SubstitutionIdentity.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -375,3 +376,25 @@ The project currently treats the following as fixed unless later proof work supp
 16. arbitrary-height substitution represented by fuel-indexed hereditary block instantiation, with fuel bounded by the maximum formal-variable level;
 17. malformed raw instantiation exposed through `Option` rather than silently coerced;
 18. bound source-name renaming erased at the source-to-core boundary.
+
+## M2.14 — Substitution for an absent free variable
+
+`SubstitutionIdentity.lean` starts the algebraic layer with a supporting law:
+`completeSubstituteVar_of_absent` proves that an absent target yields `some`
+of the original variety, formula, or functional. The argument-list counterpart
+is `completeSubstituteVarArgs_of_absent`.
+
+`FreeVariableAbsent` is a structural predicate that checks both free variety
+occurrences and free atomic heads, including arguments and abstraction bodies.
+Special names and bound indices do not count as free occurrences. The predicate
+also traverses both quantifier families, so absence covers the complete syntax.
+
+The law requires no type or scope assumptions on either input. Its mutual proof
+follows the substitution traversal and allows arbitrary replacements at each
+recursive call, including the weakened replacements beneath binders. Because
+there is no matching occurrence, no replacement validation or hereditary beta
+reduction is reached. This proves success as well as equality of the result.
+
+This repository supporting law is not a claim that Takeuti §§5.2.31–5.2.35
+have been completed. In particular, higher-type identity expansion and the
+commutation law remain future work.
