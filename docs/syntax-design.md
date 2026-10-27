@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.14 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, and complete-substitution formation preservation in
+M2.1–M2.15 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, complete-substitution formation preservation, and height-zero identity laws in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -17,6 +17,7 @@ TakeutiGLC/Syntax/TypedWeakening.lean
 TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
 TakeutiGLC/Syntax/SubstitutionTyping.lean
 TakeutiGLC/Syntax/SubstitutionIdentity.lean
+TakeutiGLC/Syntax/BaseSubstitutionIdentity.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -398,3 +399,35 @@ reduction is reached. This proves success as well as equality of the result.
 This repository supporting law is not a claim that Takeuti §§5.2.31–5.2.35
 have been completed. In particular, higher-type identity expansion and the
 commutation law remain future work.
+
+## M2.15 — Height-zero substitution identities
+
+`BaseSubstitutionIdentity.lean` proves the height-zero stages of Takeuti
+§§5.2.33–5.2.34 for `completeSubstituteVar?`, rather than only the separate
+height-zero transformation. If `target.profile = .zero`, its identity variety
+is `.freeVar target`.
+
+`Variety.HasType.completeSubstituteVar_self_base`,
+`Formula.WellFormed.completeSubstituteVar_self_base`,
+`VarietiesHaveTypes.completeSubstituteVar_self_base`, and
+`Functional.HasType.completeSubstituteVar_self_base` prove that substitution
+of this identity variety succeeds and returns the original expression.
+Convenience wrappers also cover `Variety.IsTerm`, `Variety.WellTyped`, and
+`Functional.WellFormed`. The expression may contain the target, unlike the
+preceding absence law.
+The variety theorem permits any result profile, including abstraction bodies
+containing base-variable occurrences. The mutual proof traverses both binder
+namespaces and whole abstraction blocks; weakening fixes the named free
+identity variable.
+
+`Variety.completeSubstituteVar_freeVar_base` is the matching-occurrence law:
+substituting any replacement into the target base variable returns that
+replacement. This raw computation requires no typing assumption on the
+replacement.
+
+Formation is essential for self-substitution with this partial driver. A raw
+base-variable atomic head is rejected, while a typed formula's atomic head
+has nonzero profile and cannot equal the base target. Regressions cover this
+failure boundary, a real free occurrence below mixed binders, and rejection
+of a higher-type raw free-variable node. Higher-type identity abstractions,
+the remaining §§5.2.31–5.2.32 properties, and §5.2.35 commutation remain open.

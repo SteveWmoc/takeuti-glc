@@ -65,9 +65,10 @@ The stable core already fixes and implements the following choices:
 - fuel-indexed hereditary instantiation of higher-type formal-variable blocks;
 - unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step;
 - formation-preservation theorems for the hereditary instantiation kernel and complete variable substitution (§§5.2.29–5.2.30);
-- structural free-variable absence and proofs that substitution for an absent target succeeds and returns the original varieties, formulas, argument lists, and functionals.
+- structural free-variable absence and proofs that substitution for an absent target succeeds and returns the original varieties, formulas, argument lists, and functionals;
+- height-zero identity laws for the unified substitution driver on all four typed categories (§§5.2.33–5.2.34, base stage).
 
-The construction part of Takeuti §5.2 is represented, and §§5.2.29–5.2.30 are now reflected by formation/type preservation theorems for complete substitution. M2.14 adds the supporting absent-target law without typing or scope assumptions; it does not yet prove the source identity/commutation statements. The next variable-substitution slice is the remaining identity/commutation theory in §§5.2.31–5.2.35.
+The construction part of Takeuti §5.2 is represented, and §§5.2.29–5.2.30 are now reflected by formation/type preservation theorems for complete substitution. M2.14 adds the supporting absent-target law without typing or scope assumptions. M2.15 proves the height-zero stages of §§5.2.33–5.2.34 using the unified driver; the higher-type identity stages remain open. The next variable-substitution slice is the remaining identity/commutation theory in §§5.2.31–5.2.35.
 
 ## Reading order
 

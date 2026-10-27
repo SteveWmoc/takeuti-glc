@@ -4,7 +4,7 @@
 
 A Lean 4 formalization of Gaisi Takeuti's generalized logic calculus (GLC), introduced in his 1953 paper *On a generalized logic calculus*.
 
-> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height, and its formation/type preservation theorems corresponding to Takeuti §§5.2.29–5.2.30 are now proved. Substitution for an absent free variable also succeeds and returns the original syntax. The remaining variable-substitution work is the §5.2 identity/commutation theory before functional substitution.
+> **Project status:** Milestone 2 is underway. Complete variable substitution is defined across arbitrary finite type height, and its formation/type preservation theorems corresponding to Takeuti §§5.2.29–5.2.30 are now proved. Substitution for an absent free variable also succeeds and returns the original syntax; the height-zero self-substitution identities are proved for the unified driver. The remaining variable-substitution work is the §5.2 identity/commutation theory before functional substitution.
 
 ## Source and scope
 
@@ -49,7 +49,8 @@ The stable syntax layer currently contains:
 - hereditary instantiation of variable blocks at arbitrary finite singleton levels;
 - a unified `completeSubstituteVar?` operation implementing complete variable substitution at arbitrary finite height;
 - formation preservation for hereditary instantiation and complete variable substitution, including varieties, formulas, argument lists, functionals, terms, and existential well-typing;
-- an absence law: complete substitution for a target with no free occurrence succeeds and fixes varieties, formulas, argument lists, and functionals, at arbitrary type height.
+- an absence law: complete substitution for a target with no free occurrence succeeds and fixes varieties, formulas, argument lists, and functionals, at arbitrary type height;
+- height-zero identity laws for the unified substitution driver on typed varieties, formulas, argument lists, and functionals.
 
 Still to come in Milestone 2 are the remaining identity/commutation laws for complete variable substitution and substitution of functionals for function symbols.
 
