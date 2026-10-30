@@ -15,6 +15,7 @@ import TakeutiGLC.Syntax.Instantiation
 import TakeutiGLC.Syntax.HereditaryInstantiation
 import TakeutiGLC.Syntax.HereditaryInstantiationTyping
 import TakeutiGLC.Syntax.Substitution
+import TakeutiGLC.Syntax.BaseSubstitutionTyping
 import TakeutiGLC.Syntax.BaseSubstitutionIdentity
 import TakeutiGLC.Syntax.SubstitutionIdentity
 import TakeutiGLC.Syntax.SubstitutionTyping

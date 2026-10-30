@@ -4,7 +4,7 @@
 
 This document records the binding and syntax architecture selected at the end of Milestone 1 and the permanent implementation choices that have since been realized in Milestone 2. It is the normative design record for the stable core unless later metatheory exposes a concrete defect.
 
-M2.1–M2.15 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, complete-substitution formation preservation, and height-zero identity laws in
+M2.1–M2.16 have implemented stable syntax, arbitrary-height complete variable substitution, typing-to-scope, typed-renaming/weakening preservation, complete-substitution formation preservation, height-zero identity laws, and base-substitution totality in
 
 ```text
 TakeutiGLC/Syntax/Name.lean
@@ -18,6 +18,7 @@ TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
 TakeutiGLC/Syntax/SubstitutionTyping.lean
 TakeutiGLC/Syntax/SubstitutionIdentity.lean
 TakeutiGLC/Syntax/BaseSubstitutionIdentity.lean
+TakeutiGLC/Syntax/BaseSubstitutionTyping.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -431,3 +432,36 @@ has nonzero profile and cannot equal the base target. Regressions cover this
 failure boundary, a real free occurrence below mixed binders, and rejection
 of a higher-type raw free-variable node. Higher-type identity abstractions,
 the remaining §§5.2.31–5.2.32 properties, and §5.2.35 commutation remain open.
+
+## M2.16 — Base substitution totality and kernel agreement
+
+`BaseSubstitutionTyping.lean` connects the unified partial driver to the total
+height-zero transformation. For a target of type `(0)`, the
+`completeSubstituteVar_eq_base` theorems on `Variety.HasType`,
+`Formula.WellFormed`, `VarietiesHaveTypes`, and `Functional.HasType` establish
+that the driver returns `some` of the total base-substitution result. For
+argument lists that result is a map of the total variety transformation.
+
+Only source formation and the target's base profile are required for this
+computation theorem. The replacement may be arbitrary raw syntax. The proof
+excludes matching base-variable atomic heads using source formation, then
+traverses both binder families and whole abstraction blocks with the same
+weakened replacement as the total kernel.
+
+When the replacement is a term in the original context, the
+`completeSubstituteBaseVar` theorems preserve all four formation judgments
+without a successful-run hypothesis. Convenience wrappers cover terms,
+existential variety well-typing, and functional formation. The
+`completeSubstituteVar_base_total` theorems package a successful driver result
+with its formation proof, using the total kernel as an explicit witness.
+These results reuse M2.13 preservation after proving the required run equation.
+
+The regression uses a replacement containing both a bound function application
+and a bound variable. Under a variable quantifier, a function quantifier, and
+an abstraction block, the original outer references become function index `1`
+and variable index `2`. Both the exact computed result and its typing are
+verified in the original context.
+
+This completes a success guarantee only for base targets. Success of the
+higher-type hereditary stages, higher-type identity abstractions, the
+remaining §§5.2.31–5.2.32 properties, and §5.2.35 commutation remain open.
