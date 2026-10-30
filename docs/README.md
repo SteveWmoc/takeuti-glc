@@ -28,6 +28,9 @@ TakeutiGLC/Syntax/TypedRenaming.lean
 TakeutiGLC/Syntax/TypedWeakening.lean
 TakeutiGLC/Syntax/HereditaryInstantiationTyping.lean
 TakeutiGLC/Syntax/SubstitutionTyping.lean
+TakeutiGLC/Syntax/SubstitutionIdentity.lean
+TakeutiGLC/Syntax/BaseSubstitutionIdentity.lean
+TakeutiGLC/Syntax/BaseSubstitutionTyping.lean
 TakeutiGLC/Syntax/Occurrence.lean
 TakeutiGLC/Syntax/OpenClose.lean
 TakeutiGLC/Syntax/Renaming.lean
@@ -66,9 +69,10 @@ The stable core already fixes and implements the following choices:
 - unified complete variable substitution at arbitrary finite height, including a height-two regression that exercises a genuine nested hereditary beta step;
 - formation-preservation theorems for the hereditary instantiation kernel and complete variable substitution (§§5.2.29–5.2.30);
 - structural free-variable absence and proofs that substitution for an absent target succeeds and returns the original varieties, formulas, argument lists, and functionals;
-- height-zero identity laws for the unified substitution driver on all four typed categories (§§5.2.33–5.2.34, base stage).
+- height-zero identity laws for the unified substitution driver on all four typed categories (§§5.2.33–5.2.34, base stage);
+- base substitution totality on typed sources, agreement with the total base kernel, and unconditional formation preservation for term replacements.
 
-The construction part of Takeuti §5.2 is represented, and §§5.2.29–5.2.30 are now reflected by formation/type preservation theorems for complete substitution. M2.14 adds the supporting absent-target law without typing or scope assumptions. M2.15 proves the height-zero stages of §§5.2.33–5.2.34 using the unified driver; the higher-type identity stages remain open. The next variable-substitution slice is the remaining identity/commutation theory in §§5.2.31–5.2.35.
+The construction part of Takeuti §5.2 is represented, and §§5.2.29–5.2.30 are now reflected by formation/type preservation theorems for complete substitution. M2.14 adds the supporting absent-target law without typing or scope assumptions. M2.15 proves the height-zero stages of §§5.2.33–5.2.34 using the unified driver; the higher-type identity stages remain open. M2.16 proves base substitution always succeeds on typed sources and agrees with the total base kernel; a term replacement then guarantees a typed result without a run hypothesis. Higher-type totality remains open. The next variable-substitution slice is the remaining identity/commutation theory in §§5.2.31–5.2.35.
 
 ## Reading order
 

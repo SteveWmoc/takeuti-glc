@@ -43,6 +43,7 @@ Active development is organized in milestones so that foundational representatio
 - [x] Prove the §5.2.29–§5.2.30 formation/type preservation properties for complete variable substitution.
 - [x] Prove that complete substitution for an absent free variable succeeds and fixes all stable syntactic categories (M2.14, supporting algebraic law).
 - [x] Prove the height-zero cases of §§5.2.33–5.2.34 for the unified driver (M2.15).
+- [x] Prove base-case driver/kernel agreement, totality on typed sources, and preservation without a successful-run hypothesis (M2.16).
 - [ ] Prove the remaining §5.2.31–§5.2.35 identity and commutation properties for complete variable substitution.
 - [ ] Define substitution of functionals for function symbols.
 - [ ] Prove identity, composition, and commutation laws corresponding to §5.
